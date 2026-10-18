@@ -68,9 +68,9 @@ The planned technology stack is:
 | Development IDE | Visual Studio Code |
 | Version control | Git and GitHub |
 | Specification-driven development | GitHub Spec Kit |
-| News data | Finnhub or another verified, suitable source |
+| News data | Finnhub |
 | Data processing | Pandas and NumPy |
-| Baseline sentiment analysis | VADER or TextBlob; initial selection to be finalized |
+| Baseline sentiment analysis | VADER |
 | Visualization | Plotly and/or Matplotlib |
 | User interface | Streamlit |
 | Testing | pytest |
@@ -90,7 +90,7 @@ The application will prioritize local execution and free tools. External API usa
 5. The baseline NLP method calculates sentiment scores.
 6. Scores are mapped to Positive, Negative, or Neutral labels using documented thresholds.
 7. Aggregate sentiment statistics are calculated.
-8. Suitable stock-price data is loaded and aligned with sentiment data.
+8. Suitable stock-price data is aligned with sentiment data using market-session-based comparison as the target design; daily aggregation is the fallback.
 9. The application generates sentiment and price-comparison visualizations.
 10. If implemented, an optional LLM extension provides contextual sentiment analysis for comparison with the baseline.
 
@@ -98,18 +98,20 @@ The application will prioritize local execution and free tools. External API usa
 
 ### Financial News
 
-Planned provider: Finnhub.
+Planned and Selected provider: Finnhub.
 
 - Official website: https://finnhub.io/
 - API documentation: https://finnhub.io/docs/api
 
-The selected endpoint, response fields, availability, usage limits, and applicable terms will be verified before implementation.
+The selected endpoint, response fields, availability, usage limits, and applicable terms will be verified before implementation. Configure the generated API key locally as described in API Configuration; never commit the key.
 
 ### Stock-Price Data
 
 A suitable stock-price source will be selected during technical planning.
 
 The implementation will document the selected provider, fields, data coverage, and applicable usage restrictions.
+
+The target comparison design is market-session-based alignment. Daily aggregation is the fallback if reliable session-level alignment cannot be supported by the verified data. The market calendar, timezone, treatment of news outside trading hours, and price-movement measure remain to be specified.
 
 ### Sample Data
 

@@ -99,9 +99,9 @@ Users should be able to select a company and analysis period, view available new
 | IDE | Visual Studio Code |
 | Version control | Git and GitHub |
 | Specification-driven development | GitHub Spec Kit |
-| News provider | Finnhub or another verified suitable source |
+| News provider | Finnhub |
 | Data processing | Pandas and NumPy |
-| Baseline sentiment | VADER or TextBlob |
+| Baseline sentiment | VADER |
 | Visualization | Plotly and/or Matplotlib |
 | User interface | Streamlit |
 | Automated testing | pytest |

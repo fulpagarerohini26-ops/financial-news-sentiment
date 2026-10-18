@@ -10,7 +10,7 @@ The application will retrieve financial news, analyze the sentiment expressed in
 
 The application aims to:
 
-1. Fetch company-specific financial news from a supported news API such as Finnhub.
+1. Fetch company-specific financial news from Finnhub, subject to verification of the selected endpoint, access requirements, and applicable terms.
 2. Analyze headlines and summaries using NLP sentiment analysis.
 3. Classify sentiment as Positive, Negative, or Neutral.
 4. Calculate and visualize sentiment scores and trends.

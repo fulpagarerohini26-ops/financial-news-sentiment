@@ -6,13 +6,13 @@ This document records the planned data sources, required fields, data-quality ex
 
 ## 2. Financial News Source
 
-Planned provider: Finnhub
+Planned and Selected provider: Finnhub
 
 Official website: https://finnhub.io/
 
 Documentation: https://finnhub.io/docs/api
 
-The application will use an appropriate company-specific news endpoint, subject to provider availability, authentication requirements, usage limits, and terms of service.
+The application will use an appropriate company-specific news endpoint, subject to verification of provider availability, authentication requirements, usage limits, and terms of service. The generated API key must be configured locally and must not be committed to the repository.
 
 ## 3. Required News Fields
 
@@ -41,6 +41,10 @@ Required logical fields:
 - adjusted close, if available and appropriate
 
 The selected provider, endpoint, data coverage, and applicable usage restrictions shall be documented once verified.
+
+### Comparison Interval and Alignment
+
+The target design is market-session-based alignment of news sentiment with stock-price observations. Daily aggregation is the fallback if reliable session-level alignment cannot be supported by the verified data. The market calendar, timezone, handling of news outside trading hours, and price-movement measure remain to be specified before implementation. Missing observations shall not be silently imputed.
 
 ## 5. Data Processing Rules
 
