@@ -88,15 +88,15 @@ Priority: Must have
 
 Related requirements: FR-03, NFR-02
 
-### US-11: Demonstrate the Project Offline
+### US-11: Load Local CSV Data
 
-As a reviewer, I want to run the application with sample data so that I can evaluate the core functionality without depending on live API access.
+As a reviewer or developer, I want to load documented local CSV datasets so that I can test, demonstrate, or use the core analysis workflow when live news access is unavailable.
 
-Priority: Should have
+Priority: Must have
 
-Related requirements: NFR-01, NFR-05
+Related requirements: FR-13, NFR-01, NFR-05
 
-Note: Offline demo mode is a recommended project enhancement, not an explicit requirement in the supplied problem statement.
+Acceptance: The core CSV workflow runs without network access, and included sample data is identified as non-live with its provenance and limitations documented.
 
 ## 3. User Story Completion Rule
 

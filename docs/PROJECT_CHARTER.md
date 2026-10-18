@@ -29,7 +29,7 @@ The application is intended to support data exploration and analysis. It will no
 
 The project shall aim to:
 
-1. Retrieve company-specific financial news through a suitable data source, such as Finnhub.
+1. Retrieve company-specific financial news from Finnhub, subject to verification of its endpoint, fields, access requirements, terms, and usage limits.
 2. Analyze headlines and available summaries using NLP sentiment techniques.
 3. Classify sentiment into Positive, Negative, and Neutral categories.
 4. Calculate aggregate sentiment scores and statistics.
@@ -52,6 +52,7 @@ The initial release includes:
 - Aggregate sentiment statistics.
 - Sentiment distribution and trend visualizations.
 - Comparison of sentiment with suitable stock-price data.
+- Local CSV datasets for automated testing, classroom demonstrations, and fallback when live news access is unavailable.
 - Basic input validation and error handling.
 - Automated tests for core processing and analysis.
 - Documentation, screenshots, and evaluation results.
@@ -62,7 +63,6 @@ The following enhancements may be implemented after the core release:
 
 - LLM-based contextual sentiment analysis.
 - Comparison between baseline NLP and LLM outputs.
-- Offline demo mode using a permitted sample dataset.
 - CSV export of analyzed results.
 - Additional company-comparison features.
 - A bounded agentic workflow for routing analysis and validating results.
@@ -99,7 +99,7 @@ Users should be able to select a company and analysis period, view available new
 | IDE | Visual Studio Code |
 | Version control | Git and GitHub |
 | Specification-driven development | GitHub Spec Kit |
-| News provider | Finnhub |
+| News provider | Finnhub, subject to verification of endpoint fields, access requirements, terms, and usage limits |
 | Data processing | Pandas and NumPy |
 | Baseline sentiment | VADER |
 | Visualization | Plotly and/or Matplotlib |
@@ -107,6 +107,8 @@ Users should be able to select a company and analysis period, view available new
 | Automated testing | pytest |
 | Code quality | Ruff |
 | Optional contextual analysis | Compatible local LLM or separately configured inference service |
+
+Nasdaq is the only exchange in MVP comparison. Market-session alignment is preferred, with calendar-day aggregation permitted only when the planning estimate shows session work would threaten another mandatory MVP deliverable by the capstone deadline. The decision and rationale shall be recorded before implementation.
 
 The final libraries and versions will be confirmed during technical planning. Free and open-source tools will be preferred where practical.
 

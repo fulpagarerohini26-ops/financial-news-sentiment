@@ -20,7 +20,7 @@ Features described in this README represent the intended scope. They should not 
 
 The primary objectives are to:
 
-- Retrieve company-specific financial news from a supported data provider such as Finnhub.
+- Retrieve company-specific financial news from Finnhub, subject to verification of its endpoint, fields, access requirements, terms, and usage limits.
 - Process and validate financial news records.
 - Calculate sentiment scores for headlines and available summaries.
 - Classify sentiment as Positive, Negative, or Neutral.
@@ -45,12 +45,12 @@ The primary objectives are to:
 9. **Visualization:** Display sentiment distribution and trends.
 10. **Stock-price comparison:** Compare sentiment trends with stock-price movements over a compatible period.
 11. **Error handling:** Display understandable messages for missing data, invalid inputs, and external service failures.
+12. **Local CSV support:** Load datasets for automated tests, demonstrations, and fallback when live news access is unavailable; run the core CSV workflow without network access.
 
 ### Optional Enhancements
 
 - LLM-based contextual sentiment analysis.
 - Comparison of baseline NLP and LLM-based sentiment results.
-- Offline demonstration using a clearly identified sample dataset.
 - Export of analysis results to CSV.
 - Additional company comparison and filtering features.
 - A bounded agentic workflow for analysis routing and result validation.
@@ -77,20 +77,20 @@ The planned technology stack is:
 | Code quality | Ruff |
 | Optional LLM inference | Compatible local model or separately configured inference service |
 
-The final dependency list and supported versions will be confirmed during technical planning and recorded in the project dependency configuration.
+The VADER baseline uses compound thresholds of Negative <= -0.05, Positive >= 0.05, and Neutral strictly between those values. The final dependency list and supported versions will be confirmed during technical planning and recorded in the project dependency configuration.
 
 The application will prioritize local execution and free tools. External API usage and optional LLM inference may be subject to provider limits and hardware requirements.
 
 ## 5. High-Level Processing Workflow
 
 1. The user selects a company ticker and date range.
-2. The application retrieves financial news or loads permitted sample data.
+2. The application retrieves financial news from Finnhub or loads a documented local CSV dataset.
 3. The application validates and normalizes the news records.
 4. Headline and summary text are processed independently.
 5. The baseline NLP method calculates sentiment scores.
 6. Scores are mapped to Positive, Negative, or Neutral labels using documented thresholds.
 7. Aggregate sentiment statistics are calculated.
-8. Suitable stock-price data is aligned with sentiment data using market-session-based comparison as the target design; daily aggregation is the fallback.
+8. Suitable stock-price data is aligned with sentiment using Nasdaq market sessions and the America/New_York timezone; news in (previous session close, current session close] maps to that session, and after-close/weekend/holiday news maps to the next eligible session. At the planning checkpoint, calendar-day aggregation may be chosen only if session alignment threatens another mandatory MVP deliverable by the capstone deadline; record the rationale.
 9. The application generates sentiment and price-comparison visualizations.
 10. If implemented, an optional LLM extension provides contextual sentiment analysis for comparison with the baseline.
 
@@ -98,26 +98,26 @@ The application will prioritize local execution and free tools. External API usa
 
 ### Financial News
 
-Planned and Selected provider: Finnhub.
+Selected primary news provider: Finnhub, subject to verification before integration.
 
 - Official website: https://finnhub.io/
 - API documentation: https://finnhub.io/docs/api
 
-The selected endpoint, response fields, availability, usage limits, and applicable terms will be verified before implementation. Configure the generated API key locally as described in API Configuration; never commit the key.
+The Finnhub Company News API endpoint, response fields, availability, usage limits, and applicable terms will be verified before implementation. No unverified provider capability or free quota is assumed. Configure the API key locally as described in API Configuration; never commit the key.
 
 ### Stock-Price Data
 
-A suitable stock-price source will be selected during technical planning.
+A suitable stock-price source will be selected and verified during technical planning. Nasdaq is the only MVP exchange; comparison requires ticker, trading date, and closing price.
 
 The implementation will document the selected provider, fields, data coverage, and applicable usage restrictions.
 
-The target comparison design is market-session-based alignment. Daily aggregation is the fallback if reliable session-level alignment cannot be supported by the verified data. The market calendar, timezone, treatment of news outside trading hours, and price-movement measure remain to be specified.
+Daily return is calculated as `((current close - previous Nasdaq session close) / previous Nasdaq session close) * 100`. Market-session alignment is preferred; calendar-day aggregation may be selected at planning only if the estimate threatens another mandatory MVP deliverable by the capstone deadline. The selected mode and rationale must be documented.
 
 ### Sample Data
 
-A sample dataset may be included for testing and demonstration when live API access is unavailable.
+Local CSV datasets are required for automated tests, classroom demonstrations, and fallback when live news access is unavailable. The core CSV workflow runs without network access.
 
-Sample data will be clearly identified and will not be represented as live financial news.
+Sample data will be clearly identified as non-live and will not be represented as real financial news or market observations.
 
 ## 7. Project Structure
 
@@ -196,7 +196,7 @@ The dependency configuration will be maintained as the project evolves.
 
 ### API Configuration
 
-When live API access is implemented, configure the required API key using an environment variable or a local `.env` file excluded from Git.
+For live Finnhub retrieval, configure the API key using an environment variable or a local `.env` file excluded from Git. Local CSV workflows do not require credentials.
 
 An example configuration may be provided in `.env.example`, without any real credentials.
 
@@ -228,9 +228,9 @@ Testing will cover:
 - Optional LLM response handling.
 - Reproducibility of setup and execution.
 
-Baseline sentiment performance will be evaluated against a manually labeled financial-text dataset.
+The project will record whether a small manually reviewed sample is feasible and why. Where feasible, use a manually labeled financial-text sample to discuss strengths and limitations.
 
-Where appropriate, evaluation will report accuracy, precision, recall, macro F1-score, and a confusion matrix.
+Formal accuracy, per-class precision and recall, macro F1-score, and a confusion matrix may be reported when supported by a suitable labeled dataset. Report only observed results, with dataset size, labeling approach, thresholds, and limitations.
 
 The relationship between sentiment and price movements will be analyzed separately from classifier quality. Correlation will not be treated as proof of causation or predictive performance.
 

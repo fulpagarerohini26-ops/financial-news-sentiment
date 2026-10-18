@@ -29,7 +29,7 @@ The application shall allow the user to specify a date range for retrieving fina
 
 ### FR-03: Financial News Retrieval
 
-The application shall retrieve available company-specific financial news from the configured data provider.
+The application shall retrieve available company-specific financial news from Finnhub, subject to verification of provider fields, access requirements, terms, and usage limits.
 
 It shall handle empty responses and report data retrieval errors clearly.
 
@@ -51,7 +51,7 @@ If a summary is missing or empty, the application shall indicate that summary se
 
 ### FR-07: Sentiment Classification
 
-The application shall classify analyzed text as Positive, Negative, or Neutral using documented classification thresholds.
+The application shall classify analyzed text using VADER compound scores: Negative at <= -0.05, Positive at >= 0.05, and Neutral strictly between those boundaries.
 
 ### FR-08: Aggregate Sentiment Analysis
 
@@ -65,7 +65,7 @@ The application shall display sentiment distributions and sentiment trends over 
 
 ### FR-10: Stock-Price Comparison
 
-The application shall retrieve or load suitable stock-price data and compare price movements with news sentiment over a compatible time period.
+The application shall load suitable stock-price data and compare price movements with news sentiment over a compatible period. Nasdaq is the only supported exchange for MVP comparison. Market-session alignment is preferred; calendar-day aggregation may be selected at planning only if the estimate threatens another mandatory MVP deliverable by the capstone deadline. The selected market-data source and its fields, terms, coverage, and access requirements shall be verified and documented.
 
 Any statistical relationship shall be described as exploratory unless supported by a more rigorous predictive evaluation.
 
@@ -78,6 +78,10 @@ This extension shall be distinguishable from the baseline NLP result, and its mo
 ### FR-12: Results Presentation
 
 The application shall present analyzed news records, sentiment labels, numerical scores, summary statistics, and visualizations through a user-friendly interface.
+
+### FR-13: Local CSV Support
+
+The application shall load documented local CSV datasets for testing, classroom demonstration, and fallback when live news access is unavailable. The core CSV analysis workflow shall run without network access. Any included sample data shall identify provenance and limitations and shall not be represented as live data.
 
 ## 4. Non-Functional Requirements
 
@@ -100,10 +104,12 @@ News retrieval, preprocessing, sentiment analysis, market-data processing, and v
 ### NFR-05: Reproducibility
 
 The project shall include dependency configuration, a lockfile, execution instructions, and documented analysis settings.
+Local CSV schemas and sample-data provenance shall also be documented.
 
 ### NFR-06: Testability
 
 Core processing and sentiment functions shall be independently testable using controlled test data.
+Tests shall cover exact VADER threshold boundaries, CSV loading, separate headline/summary calculations, and Nasdaq session assignment for close, after-close, weekends, holidays, and time-zone transitions.
 
 ### NFR-07: Transparency
 
@@ -113,6 +119,8 @@ The application shall identify its data source, analysis method, relevant date r
 
 - The project shall prioritize free development tools and local execution.
 - Live data access may depend on provider availability, account limits, and API terms.
+- Nasdaq is the sole MVP exchange; its calendar and America/New_York timezone govern the preferred session alignment.
+- Local CSVs are required for tests, demonstrations, and provider fallback; live and sample data shall be distinguishable.
 - LLM-based analysis may require local model resources or a separately configured inference service.
 - Sentiment analysis results shall not be presented as guaranteed stock-price predictions.
 

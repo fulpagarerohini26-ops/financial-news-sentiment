@@ -59,9 +59,9 @@
 
 ## Article VIII: Evidence-Based Evaluation
 
-- The project MUST define how sentiment-analysis quality will be evaluated.
-- Where feasible, evaluation MUST use a manually labeled dataset with documented labeling guidelines.
-- Suitable classification metrics, such as precision, recall, macro F1-score, and a confusion matrix, SHOULD be reported when supported by the evaluation dataset.
+- The project MUST record whether a small manually reviewed sentiment sample is feasible and the rationale for that assessment.
+- Where feasible, baseline sentiment SHOULD be reviewed using manually labeled financial text with a documented labeling approach.
+- Formal accuracy, precision, recall, macro F1-score, and confusion-matrix metrics MAY be reported when supported by a suitable labeled dataset.
 - Evaluation results MUST reflect actual executed tests and measurements; results MUST NOT be fabricated or inferred from successful application execution.
 - Limitations caused by dataset size, class imbalance, financial language, or source coverage MUST be disclosed.
 

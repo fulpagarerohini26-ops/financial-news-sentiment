@@ -6,13 +6,13 @@ This document records the planned data sources, required fields, data-quality ex
 
 ## 2. Financial News Source
 
-Planned and Selected provider: Finnhub
+Selected primary news provider: Finnhub, subject to verification before integration.
 
 Official website: https://finnhub.io/
 
 Documentation: https://finnhub.io/docs/api
 
-The application will use an appropriate company-specific news endpoint, subject to verification of provider availability, authentication requirements, usage limits, and terms of service. The generated API key must be configured locally and must not be committed to the repository.
+The application will use the Finnhub Company News API after verifying provider availability, authentication requirements, response fields, usage limits, and terms of service. No unverified capability or free quota is assumed. The API key must be configured locally and must not be committed to the repository.
 
 ## 3. Required News Fields
 
@@ -30,21 +30,22 @@ These are logical application fields. The implementation shall map the provider'
 
 ## 4. Stock-Price Data
 
-A suitable stock-price source must be selected and verified before implementing the price comparison feature.
+A suitable stock-price source must be selected and verified before implementing the price comparison feature. Nasdaq is the only supported exchange in MVP.
 
 Required logical fields:
 
 - ticker
 - timestamp or trading date
-- open, high, low, close, if available
+- close (required for MVP)
+- open, high, low, if available
 - volume, if available
 - adjusted close, if available and appropriate
 
-The selected provider, endpoint, data coverage, and applicable usage restrictions shall be documented once verified.
+The selected provider, endpoint, data coverage, and applicable usage restrictions shall be documented once verified. Only ticker, Nasdaq trading date, and closing price are required for MVP comparison.
 
 ### Comparison Interval and Alignment
 
-The target design is market-session-based alignment of news sentiment with stock-price observations. Daily aggregation is the fallback if reliable session-level alignment cannot be supported by the verified data. The market calendar, timezone, handling of news outside trading hours, and price-movement measure remain to be specified before implementation. Missing observations shall not be silently imputed.
+The target design is market-session-based alignment using the Nasdaq calendar and America/New_York timezone. Assign timestamps in (previous session close, current session close] to that session; after-close, weekend, and holiday news goes to the next eligible session. At planning, calendar-day aggregation may be selected only if the estimate shows session alignment threatens another mandatory MVP deliverable by the capstone deadline; record the reason and selected mode. Missing observations shall not be silently imputed. Daily return is `((current close - previous Nasdaq session close) / previous Nasdaq session close) * 100`.
 
 ## 5. Data Processing Rules
 
@@ -59,11 +60,11 @@ The target design is market-session-based alignment of news sentiment with stock
 
 ## 6. Demo Data
 
-If a live API is unavailable, the application may use a clearly identified sample dataset for demonstrations and tests.
+Local CSV datasets are required for automated tests, classroom demonstrations, and fallback when live news access is unavailable. The core CSV workflow shall run without network access.
 
-Sample data shall not be represented as live financial news.
+Sample data shall not be represented as live financial news or market observations.
 
-The source, creation method, and any limitations of the sample data shall be recorded.
+The source or creation method, permitted use, and limitations of each sample dataset shall be recorded. Synthetic samples shall be explicitly labeled synthetic.
 
 ## 7. Data Validation
 

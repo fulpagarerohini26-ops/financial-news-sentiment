@@ -6,7 +6,7 @@
 
 ## Content Quality
 
-- [x] No implementation details (languages, frameworks, APIs)
+- [x] Implementation details are limited to user-approved resolved decisions
 - [x] Focused on user value and business needs
 - [x] Written for non-technical stakeholders
 - [x] All mandatory sections completed
@@ -28,10 +28,11 @@
 - [x] All functional requirements have clear acceptance criteria
 - [x] User scenarios cover primary flows
 - [x] Feature meets measurable outcomes defined in Success Criteria
-- [x] No implementation details leak into specification
+- [x] No unverified implementation details or provider capabilities are asserted
 
 ## Notes
 
-- The spec intentionally leaves provider selection, baseline method/thresholds, and price/time alignment for user review; it does not assume provider capabilities or quotas.
-- Review the three questions in `spec.md` before `/speckit.plan`; this checklist assesses requirements quality, not approval of those decisions.
-- Optional LLM and offline demo capabilities are not MVP completion gates.
+- Finnhub is the selected news provider, subject to verification of fields, access requirements, terms, and usage limits. No free quota is assumed.
+- VADER thresholds, Nasdaq-only session assignment, the close-to-close rule, and the planning-stage daily fallback are resolved in `spec.md`.
+- Local CSV support is mandatory for tests, demonstrations, and fallback. LLM integration and formal classifier metrics remain optional under the resolved decisions.
+- This checklist assesses specification quality only; it does not claim implementation or runtime behavior has been verified.
