@@ -1,0 +1,33 @@
+[project]
+name = "financial-news-sentiment"
+version = "0.1.0"
+description = "To leverage LLMs and NLP techniques to extract, analyze, and visualize market sentiment from real-time financial news"
+readme = "README.md"
+authors = [
+    { name = "fulpagarerohini26-ops", email = "fulpagare.rohini26@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "finnhub-python>=2.4.29",
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.4",
+    "pandas>=3.0.6",
+    "plotly>=7.1.0",
+    "scikit-learn>=1.9.1",
+    "streamlit>=1.66.0",
+    "textblob>=0.20.1",
+    "vadersentiment>=3.3.2",
+]
+
+[project.scripts]
+financial-news-sentiment = "financial_news_sentiment:main"
+
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]

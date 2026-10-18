@@ -1,4 +1,4 @@
-# financial-news-sentiment-git-repo
+# financial-news-sentiment
 financial-news-sentiment capstone project
 
 # GenAI-Powered Financial News Sentiment Analyzer
@@ -8,27 +8,19 @@ In today’s fast-paced financial markets, investors and analysts face challenge
 
 2. Objective
 ●	To build an AI-powered financial sentiment analyzer that:
-
-○	Fetches real-time financial news using APIs such as Finnhub.
-
-○	Performs sentiment analysis (positive, negative, neutral) on headlines and summaries.
-
-○	Visualizes sentiment trends and evaluates their impact on stock price movements.
+    ○	Fetches real-time financial news using APIs such as Finnhub.
+    ○	Performs sentiment analysis (positive, negative, neutral) on headlines and summaries.
+    ○	Visualizes sentiment trends and evaluates their impact on stock price movements.
 
 3. About the Data
 ●	Source: Finnhub.io Financial API
-
 ●	Type of Data: Real-time and historical financial news, stock price data, and sentiment indicators.
 
 4. Technical Approach
 ●	Step 1: Use the Finnhub API to fetch company-specific news articles.
-
 ●	Step 2: Perform text preprocessing and sentiment analysis using TextBlob or VADER.
-
 ●	Step 3: Compute overall sentiment polarity scores for both headlines and summaries.
-
 ●	Step 4: Visualize the sentiment trend and analyze its correlation with stock price movement.
-
 ●	Step 5: Extend the system with LLM-based contextual sentiment understanding (e.g., GPT or fine-tuned LLaMA model).
 
 
@@ -62,3 +54,12 @@ print("Average Summary Sentiment:", avg_sentiment['summary_sentiment'])
 2.	Impact Analysis – Evaluate how sentiment fluctuations correlate with stock price changes or market volatility.
 
 3.	Market Prediction Support – Use historical sentiment patterns to provide predictive insights for trading strategies.
+
+
+# Commands for running and verifying project
+cd C:\GenAI-Capstone-Project-1\financial-news-sentiment
+.venv\Scripts\Activate.ps1
+uv run ruff check .
+uv run pytest -v
+uv run streamlit run src/financial_news_sentiment/app.py
+
