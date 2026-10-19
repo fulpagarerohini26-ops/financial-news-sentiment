@@ -1,6 +1,6 @@
 # Feature Specification: GenAI-Powered Financial News Sentiment Analyzer
 
-**Feature Branch**: `001-financial-news-sentiment-analyzer`
+**Feature Branch**: `main-nasdaq`
 
 **Created**: 2026-10-18
 
