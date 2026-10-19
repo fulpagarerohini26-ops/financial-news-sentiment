@@ -90,7 +90,7 @@ The application will prioritize local execution and free tools. External API usa
 5. The baseline NLP method calculates sentiment scores.
 6. Scores are mapped to Positive, Negative, or Neutral labels using documented thresholds.
 7. Aggregate sentiment statistics are calculated.
-8. Suitable stock-price data is aligned with sentiment using Nasdaq market sessions and the America/New_York timezone; news in (previous session close, current session close] maps to that session, and after-close/weekend/holiday news maps to the next eligible session. At the planning checkpoint, calendar-day aggregation may be chosen only if session alignment threatens another mandatory MVP deliverable by the capstone deadline; record the rationale.
+8. Suitable stock-price data is aligned with sentiment using Nasdaq market sessions and the America/New_York timezone; news in (previous session close, current session close) maps to that session, and after-close/weekend/holiday news maps to the next eligible session. At the planning checkpoint, calendar-day aggregation may be chosen only if session alignment threatens another mandatory MVP deliverable by the capstone deadline; record the rationale.
 9. The application generates sentiment and price-comparison visualizations.
 10. If implemented, an optional LLM extension provides contextual sentiment analysis for comparison with the baseline.
 
@@ -196,7 +196,13 @@ The dependency configuration will be maintained as the project evolves.
 
 ### API Configuration
 
-For live Finnhub retrieval, configure the API key using an environment variable or a local `.env` file excluded from Git. Local CSV workflows do not require credentials.
+For live Finnhub retrieval, copy `.env.example` to `.env` and replace the placeholder with your Finnhub API key. The `.env` file is excluded from Git. The application can read the key with `get_finnhub_api_key()` from `financial_news_sentiment.settings`; the value is loaded from the process environment first, then the project `.env` file. Local CSV workflows do not require credentials.
+
+Alternatively, set the environment variable directly in PowerShell for the current terminal:
+
+```powershell
+$env:FINNHUB_API_KEY = "your_finnhub_api_key_here"
+```
 
 An example configuration may be provided in `.env.example`, without any real credentials.
 
