@@ -33,6 +33,6 @@
 ## Notes
 
 - Finnhub is the selected news provider, subject to verification of fields, access requirements, terms, and usage limits. No free quota is assumed.
-- VADER thresholds, Nasdaq-only session assignment, the close-to-close rule, and the planning-stage daily fallback are resolved in `spec.md`.
+- VADER thresholds, NSE-only session assignment, the close-to-close rule, and the planning-stage daily fallback are resolved in `spec.md`.
 - Local CSV support is mandatory for tests, demonstrations, and fallback. LLM integration and formal classifier metrics remain optional under the resolved decisions.
 - This checklist assesses specification quality only; it does not claim implementation or runtime behavior has been verified.

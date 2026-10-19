@@ -43,9 +43,9 @@ The initial release will not:
 ## 4. Assumptions
 
 1. Finnhub is the selected primary news source, subject to verification of its endpoint, fields, credentials, terms, and usage limits; local CSV data supports tests, demonstrations, and fallback.
-2. Nasdaq is the only exchange supported for the MVP comparison.
+2. NSE is the only exchange supported for the MVP comparison.
 3. Market-session alignment is preferred; calendar-day aggregation may be selected at planning only if the estimate threatens another mandatory MVP deliverable by the capstone deadline.
-4. Preferred-mode news timestamps use (previous Nasdaq session close, current session close] in America/New_York; after-close, weekend, and holiday records map to the next eligible session.
+4. Preferred-mode news timestamps use (previous NSE session close, current session close) in Asia/Kolkata; after-close, weekend, and holiday records map to the next eligible session.
 5. API availability, rate limits, and data coverage may vary.
 6. News headlines and summaries may be incomplete or biased.
 7. General-purpose sentiment models may not correctly interpret financial terminology, sarcasm, negation, or context.

@@ -30,7 +30,7 @@ These are logical application fields. The implementation shall map the provider'
 
 ## 4. Stock-Price Data
 
-A suitable stock-price source must be selected and verified before implementing the price comparison feature. Nasdaq is the only supported exchange in MVP.
+A suitable stock-price source must be selected and verified before implementing the price comparison feature. NSE is the only supported exchange in MVP.
 
 Required logical fields:
 
@@ -41,11 +41,11 @@ Required logical fields:
 - volume, if available
 - adjusted close, if available and appropriate
 
-The selected provider, endpoint, data coverage, and applicable usage restrictions shall be documented once verified. Only ticker, Nasdaq trading date, and closing price are required for MVP comparison.
+The selected provider, endpoint, data coverage, and applicable usage restrictions shall be documented once verified. Only ticker, NSE trading date, and closing price are required for MVP comparison.
 
 ### Comparison Interval and Alignment
 
-The target design is market-session-based alignment using the Nasdaq calendar and America/New_York timezone. Assign timestamps in (previous session close, current session close] to that session; after-close, weekend, and holiday news goes to the next eligible session. At planning, calendar-day aggregation may be selected only if the estimate shows session alignment threatens another mandatory MVP deliverable by the capstone deadline; record the reason and selected mode. Missing observations shall not be silently imputed. Daily return is `((current close - previous Nasdaq session close) / previous Nasdaq session close) * 100`.
+The target design is market-session-based alignment using the NSE calendar and Asia/Kolkata timezone. Assign timestamps in (previous session close, current session close) to that session; after-close, weekend, and holiday news goes to the next eligible session. At planning, calendar-day aggregation may be selected only if the estimate shows session alignment threatens another mandatory MVP deliverable by the capstone deadline; record the reason and selected mode. Missing observations shall not be silently imputed. Daily return is `((current close - previous NSE session close) / previous NSE session close) * 100`.
 
 ## 5. Data Processing Rules
 

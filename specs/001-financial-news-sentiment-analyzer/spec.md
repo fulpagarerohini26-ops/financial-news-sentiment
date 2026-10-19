@@ -13,8 +13,8 @@
 ### Session 2026-10-18
 
 - Q: When may the project select daily aggregation instead of market-session alignment? → A: At the planning checkpoint, only if the estimate indicates session alignment would jeopardize another mandatory MVP deliverable by the capstone deadline; document the rationale and selected mode.
-- Q: Which single exchange calendar governs session assignment? → A: Nasdaq only.
-- Q: How are news timestamps assigned to Nasdaq sessions? → A: Use the close-to-close window (previous session close, current session close]; after-close, weekend, and holiday articles go to the next eligible session.
+- Q: Which single exchange calendar governs session assignment? → A: NSE only.
+- Q: How are news timestamps assigned to NSE sessions? → A: Use the close-to-close window (previous session close, current session close); after-close, weekend, and holiday articles go to the next eligible session.
 - Q: At what checkpoint is the schedule-based fallback selected? → A: During planning, before implementation, with the threatened MVP deliverable and rationale recorded.
 
 ## User Scenarios & Testing
@@ -159,7 +159,7 @@ As a project reviewer, I want documented setup, configuration, tests, and evalua
 - **FR-009**: The system MUST use documented baseline classification thresholds, including deterministic handling of threshold boundaries. The baseline method is VADER. Sentiment classification uses the VADER compound score with thresholds: Positive >= 0.05, Negative <= -0.05, Neutral between -0.05 and 0.05.
 - **FR-010**: The system MUST calculate aggregate sentiment statistics for headlines and summaries separately, using only valid available scores and identifying the aggregation basis.
 - **FR-011**: The system MUST provide sentiment distribution and trend visualizations for the selected period when valid data is available. Visualized counts and values MUST correspond to the displayed records and aggregation rules.
-- **FR-012**: The system MUST compare aggregated sentiment with stock-price movements using Nasdaq market sessions by default. If, at the planning checkpoint, the estimate indicates that session alignment would jeopardize another mandatory MVP deliverable by the capstone deadline, the project MAY select calendar-day aggregation as the fallback and MUST record the decision and rationale before implementation. The system MUST identify the price-data source, time basis, alignment rule, coverage, and any statistical method used.
+- **FR-012**: The system MUST compare aggregated sentiment with stock-price movements using NSE market sessions by default. If, at the planning checkpoint, the estimate indicates that session alignment would jeopardize another mandatory MVP deliverable by the capstone deadline, the project MAY select calendar-day aggregation as the fallback and MUST record the decision and rationale before implementation. The system MUST identify the price-data source, time basis, alignment rule, coverage, and any statistical method used.
 - **FR-013**: The system MUST describe sentiment-price relationships as exploratory, MUST distinguish sentiment analysis from stock-price prediction, and MUST NOT claim that correlation proves causation or implies guaranteed investment outcomes.
 - **FR-014**: The system MAY provide an LLM-based contextual sentiment extension. If present, it MUST be optional, separately labeled from baseline NLP, and document the model and configuration. Baseline scoring and visualization MUST remain usable without LLM configuration or service access.
 - **FR-015**: The system MUST identify whether results use live provider data or sample data and MUST disclose the data source, relevant date range, analysis method, and material limitations.
@@ -215,12 +215,12 @@ The following preserves the project acceptance-criteria identifiers and adds onl
 | AC-07 | Label mapping | VADER compound scores at or below -0.05 are Negative, scores at or above 0.05 are Positive, and scores strictly between -0.05 and 0.05 are Neutral; tests verify both exact boundaries. | US-03 |
 | AC-08 | Aggregate statistics | Headline and summary statistics are separate and use only valid available scores. | US-04 |
 | AC-09 | Sentiment charts | The application displays a sentiment-distribution chart and a sentiment-trend chart; both reflect available data for the selected period and identify their aggregation basis. | US-04 |
-| AC-10 | Price comparison | The application displays a stock-price trend and a sentiment-versus-price comparison. Daily return is calculated as ((current close - previous Nasdaq session close) / previous Nasdaq session close) * 100; source, interval, coverage, and alignment are disclosed. | US-05 |
+| AC-10 | Price comparison | The application displays a stock-price trend and a sentiment-versus-price comparison. Daily return is calculated as ((current close - previous NSE session close) / previous NSE session close) * 100; source, interval, coverage, and alignment are disclosed. | US-05 |
 | AC-11 | LLM extension | If implemented, contextual LLM results are optional and clearly separated from baseline results; baseline works without them. | US-07 |
 | AC-12 | Error handling | Invalid inputs, missing required data, empty responses, API/service failures, and rate limits produce understandable feedback. | US-01, US-02 |
 | AC-13 | CSV and offline support | Local CSV datasets can be loaded for tests, demonstration, and provider fallback; the core analysis workflow completes without network access, and sample data is identified as non-live with provenance and limitations documented. | US-08 |
 | AC-14 | Record validation and duplicates | Required fields and timestamps are validated; optional fields may be absent; duplicate rules are documented and verified with controlled records. | US-02 |
-| AC-15 | Data alignment | In the preferred mode, timezone-aware news timestamps are assigned to the Nasdaq session window (previous session close, current session close] in America/New_York; after-close, weekend, and holiday news is assigned to the next eligible session. Missing observations are disclosed and never imputed. | US-05 |
+| AC-15 | Data alignment | In the preferred mode, timezone-aware news timestamps are assigned to the NSE session window (previous session close, current session close) in Asia/Kolkata; after-close, weekend, and holiday news is assigned to the next eligible session. Missing observations are disclosed and never imputed. | US-05 |
 | AC-16 | Responsible interpretation | Results identify method/data limitations, do not present sentiment as a price prediction or advice, and do not claim correlation proves causation. | US-05, US-06 |
 | AC-17 | Baseline independence | Baseline analysis and results remain usable when no LLM is configured or the LLM service fails. | US-07 |
 | QA-01 | Testability | Automated unit tests cover core validation, sentiment classification, aggregation, and error handling independently of live services. | US-02 through US-05 |
@@ -248,7 +248,7 @@ The following preserves the project acceptance-criteria identifiers and adds onl
 - **SC-001**: For every valid ticker/date-range test request, the system returns a documented set of retrieved records, a clearly identified empty state, or an actionable error; it does not silently substitute another scope.
 - **SC-002**: Every retained non-empty headline in a controlled test set receives exactly one baseline score and one of the three documented labels; every non-empty summary is analyzed separately.
 - **SC-003**: Missing summaries and empty aggregation intervals are never counted as Neutral or zero sentiment; aggregate totals match the valid input records in controlled tests.
-- **SC-004**: Controlled Nasdaq session tests assign timestamps in (previous close, current close] to that session and after-close, weekend, and holiday timestamps to the next eligible session; any approved fallback uses calendar dates and discloses missing matched observations.
+- **SC-004**: Controlled NSE session tests assign timestamps in (previous close, current close) to that session and after-close, weekend, and holiday timestamps to the next eligible session; any approved fallback uses calendar dates and discloses missing matched observations.
 - **SC-005**: All mandatory acceptance scenarios have corresponding verification evidence, and the automated tests for core logic pass before MVP acceptance.
 - **SC-006**: A reviewer can follow the documented setup to install dependencies and run the project without any secret committed to the repository.
 - **SC-007**: Evaluation documentation records the feasibility decision and rationale for manual review; where performed, it records sample size, labeling approach, thresholds, observations, and limitations. Formal metrics are included only when supported by suitable labeled data, and no unmeasured performance claim is made.
@@ -261,7 +261,7 @@ The following preserves the project acceptance-criteria identifiers and adds onl
 - A stock-price source has not yet been selected. Market-data availability, adjustment conventions, and terms must be verified before implementation.
 - Logical news fields in this specification are application-level concepts; provider response names and availability may differ.
 - The baseline is VADER with compound thresholds: Negative <= -0.05, Neutral between -0.05 and 0.05, and Positive >= 0.05.
-- Nasdaq is the only exchange in MVP. Use the Nasdaq trading calendar and America/New_York timezone. Assign news in (previous session close, current session close] to the current session; after-close, weekend, and holiday news goes to the next eligible session. At the planning checkpoint, use calendar-day aggregation only if the session-alignment estimate threatens another mandatory MVP deliverable by the capstone deadline; record the decision and rationale.
+- NSE is the only exchange in MVP. Use the NSE trading calendar and Asia/Kolkata timezone. Assign news in (previous session close, current session close) to the current session; after-close, weekend, and holiday news goes to the next eligible session. At the planning checkpoint, use calendar-day aggregation only if the session-alignment estimate threatens another mandatory MVP deliverable by the capstone deadline; record the decision and rationale.
 - A small manual sentiment review SHOULD be performed where feasible and its feasibility assessment recorded. Formal classification metrics MAY be reported when suitable labeled data exists; no minimum classifier score is assumed.
 - Data coverage may be incomplete, and sentiment methods may misinterpret financial terminology, negation, sarcasm, or context.
 - Live API and optional LLM access may require credentials and may be constrained by terms, usage limits, availability, or local hardware.
@@ -385,7 +385,7 @@ VADER is free, lightweight, deterministic, easy to implement, and suitable for a
 
 #### 3. Comparison Interval, Timestamp Alignment, and Price Movement
 
-**Decision:** The preferred comparison approach is **Nasdaq Market Session Based Comparison**, using the Nasdaq trading calendar and America/New_York timezone.
+**Decision:** The preferred comparison approach is **NSE Market Session Based Comparison**, using the NSE trading calendar and Asia/Kolkata timezone.
 
 At the planning checkpoint, the project MAY select **Daily Aggregation** only if the estimate indicates that session alignment would jeopardize another mandatory MVP deliverable by the capstone deadline. The affected deliverable, estimate, rationale, and selected mode MUST be recorded before implementation; no ad-hoc mode switch is allowed during implementation.
 
@@ -394,8 +394,8 @@ At the planning checkpoint, the project MAY select **Daily Aggregation** only if
 - News articles are assigned to trading sessions.
 - Sentiment is aggregated at the market-session level.
 - Session sentiment is compared with stock-price movement for the same trading session.
-- Use the session window (previous Nasdaq session close, current Nasdaq session close], expressed as UTC instants for America/New_York session boundaries.
-- News after the current session close, on weekends, or on Nasdaq market holidays MUST be assigned to the next eligible session.
+- Use the session window (previous NSE session close, current NSE session close), expressed as UTC instants for Asia/Kolkata session boundaries.
+- News after the current session close, on weekends, or on NSE market holidays MUST be assigned to the next eligible session.
 - This rule includes pre-market and regular-session news in the current session when their timestamps fall inside the window.
 
 ##### Approved Fallback: Daily Aggregation
@@ -422,7 +422,7 @@ Intervals without valid sentiment data MUST be reported as unavailable rather th
 ##### Price Movement Calculation
 
 Daily percentage return is calculated as:
-((Current Close - Previous Nasdaq Session Close) / Previous Nasdaq Session Close) * 100
+((Current Close - Previous NSE Session Close) / Previous NSE Session Close) * 100
 
 If the previous session close is missing, invalid, or zero, the return is unavailable and MUST NOT be estimated or imputed.
 

@@ -21,7 +21,7 @@ This document defines measurable conditions for accepting the first working rele
 | AC-11 | LLM extension | If implemented, contextual LLM results are clearly separated from baseline results. |
 | AC-12 | Error handling | API errors, invalid inputs, and missing data produce understandable feedback. |
 | AC-13 | CSV and offline support | Local CSV datasets support automated tests, demonstrations, and provider fallback; the core workflow runs from local data without network access. Included samples are identified as non-live and include provenance and limitations. |
-| AC-14 | Nasdaq session assignment | With the preferred mode, timezone-aware news in (previous Nasdaq session close, current session close] maps to that session; after-close, weekend, and holiday news maps to the next eligible session using America/New_York boundaries. |
+| AC-14 | NSE session assignment | With the preferred mode, timezone-aware news in (previous NSE session close, current session close) maps to that session; after-close, weekend, and holiday news maps to the next eligible session using Asia/Kolkata boundaries. |
 | AC-15 | Daily fallback decision | At planning, if the session-alignment estimate threatens another mandatory MVP deliverable by the capstone deadline, the affected deliverable, rationale, and calendar-day fallback selection are recorded before implementation. |
 | AC-16 | Session fallback alignment | If calendar-day fallback is selected, only matching ticker/calendar-date observations are compared; unmatched weekend/holiday data is disclosed and excluded. |
 | AC-17 | Required charts | The application displays a sentiment distribution chart, sentiment trend chart, stock-price trend chart, and sentiment-versus-price chart; each is checked against controlled data. |
@@ -60,9 +60,9 @@ The application shall document:
 
 - The source of the stock-price data.
 - The price and sentiment aggregation intervals.
-- The Nasdaq exchange calendar and America/New_York timezone used by the preferred session-based mode.
+- The NSE exchange calendar and Asia/Kolkata timezone used by the preferred session-based mode.
 - The planning rationale and selected mode if calendar-day fallback is used.
-- The close-to-close return calculation: `((current close - previous Nasdaq session close) / previous Nasdaq session close) * 100`.
+- The close-to-close return calculation: `((current close - previous NSE session close) / previous NSE session close) * 100`.
 - How timestamps and market trading days are aligned.
 - The statistical method used, if correlation is calculated.
 - The limitations of interpreting correlation.

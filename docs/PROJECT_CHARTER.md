@@ -108,7 +108,7 @@ Users should be able to select a company and analysis period, view available new
 | Code quality | Ruff |
 | Optional contextual analysis | Compatible local LLM or separately configured inference service |
 
-Nasdaq is the only exchange in MVP comparison. Market-session alignment is preferred, with calendar-day aggregation permitted only when the planning estimate shows session work would threaten another mandatory MVP deliverable by the capstone deadline. The decision and rationale shall be recorded before implementation.
+NSE is the only exchange in MVP comparison. Market-session alignment uses the NSE calendar and Asia/Kolkata timezone. Calendar-day aggregation is permitted only when the planning estimate shows session work would threaten another mandatory MVP deliverable by the capstone deadline. The decision and rationale shall be recorded before implementation.
 
 The final libraries and versions will be confirmed during technical planning. Free and open-source tools will be preferred where practical.
 

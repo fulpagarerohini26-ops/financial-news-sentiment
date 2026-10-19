@@ -65,7 +65,7 @@ The application shall display sentiment distributions and sentiment trends over 
 
 ### FR-10: Stock-Price Comparison
 
-The application shall load suitable stock-price data and compare price movements with news sentiment over a compatible period. Nasdaq is the only supported exchange for MVP comparison. Market-session alignment is preferred; calendar-day aggregation may be selected at planning only if the estimate threatens another mandatory MVP deliverable by the capstone deadline. The selected market-data source and its fields, terms, coverage, and access requirements shall be verified and documented.
+The application shall load suitable stock-price data and compare price movements with news sentiment over a compatible period. NSE is the only supported exchange for MVP comparison. Market-session alignment using the NSE calendar and Asia/Kolkata timezone is preferred; calendar-day aggregation may be selected at planning only if the estimate threatens another mandatory MVP deliverable by the capstone deadline. The selected market-data source and its fields, terms, coverage, and access requirements shall be verified and documented.
 
 Any statistical relationship shall be described as exploratory unless supported by a more rigorous predictive evaluation.
 
@@ -109,7 +109,7 @@ Local CSV schemas and sample-data provenance shall also be documented.
 ### NFR-06: Testability
 
 Core processing and sentiment functions shall be independently testable using controlled test data.
-Tests shall cover exact VADER threshold boundaries, CSV loading, separate headline/summary calculations, and Nasdaq session assignment for close, after-close, weekends, holidays, and time-zone transitions.
+Tests shall cover exact VADER threshold boundaries, CSV loading, separate headline/summary calculations, and NSE session assignment for close, after-close, weekends, holidays, and time-zone handling.
 
 ### NFR-07: Transparency
 
@@ -119,7 +119,7 @@ The application shall identify its data source, analysis method, relevant date r
 
 - The project shall prioritize free development tools and local execution.
 - Live data access may depend on provider availability, account limits, and API terms.
-- Nasdaq is the sole MVP exchange; its calendar and America/New_York timezone govern the preferred session alignment.
+- NSE is the sole MVP exchange; its calendar and Asia/Kolkata timezone govern the preferred session alignment.
 - Local CSVs are required for tests, demonstrations, and provider fallback; live and sample data shall be distinguishable.
 - LLM-based analysis may require local model resources or a separately configured inference service.
 - Sentiment analysis results shall not be presented as guaranteed stock-price predictions.

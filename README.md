@@ -90,7 +90,7 @@ The application will prioritize local execution and free tools. External API usa
 5. The baseline NLP method calculates sentiment scores.
 6. Scores are mapped to Positive, Negative, or Neutral labels using documented thresholds.
 7. Aggregate sentiment statistics are calculated.
-8. Suitable stock-price data is aligned with sentiment using Nasdaq market sessions and the America/New_York timezone; news in (previous session close, current session close] maps to that session, and after-close/weekend/holiday news maps to the next eligible session. At the planning checkpoint, calendar-day aggregation may be chosen only if session alignment threatens another mandatory MVP deliverable by the capstone deadline; record the rationale.
+8. Suitable stock-price data is aligned with sentiment using NSE market sessions and the Asia/Kolkata timezone; news in (previous session close, current session close) maps to that session, and after-close/weekend/holiday news maps to the next eligible session. At the planning checkpoint, calendar-day aggregation may be chosen only if session alignment threatens another mandatory MVP deliverable by the capstone deadline; record the rationale.
 9. The application generates sentiment and price-comparison visualizations.
 10. If implemented, an optional LLM extension provides contextual sentiment analysis for comparison with the baseline.
 
@@ -107,11 +107,11 @@ The Finnhub Company News API endpoint, response fields, availability, usage limi
 
 ### Stock-Price Data
 
-A suitable stock-price source will be selected and verified during technical planning. Nasdaq is the only MVP exchange; comparison requires ticker, trading date, and closing price.
+A suitable stock-price source will be selected and verified during technical planning. NSE is the only MVP exchange; comparison requires ticker, trading date, and closing price.
 
 The implementation will document the selected provider, fields, data coverage, and applicable usage restrictions.
 
-Daily return is calculated as `((current close - previous Nasdaq session close) / previous Nasdaq session close) * 100`. Market-session alignment is preferred; calendar-day aggregation may be selected at planning only if the estimate threatens another mandatory MVP deliverable by the capstone deadline. The selected mode and rationale must be documented.
+Daily return is calculated as `((current close - previous NSE session close) / previous NSE session close) * 100`. Market-session alignment is preferred; calendar-day aggregation may be selected at planning only if the estimate threatens another mandatory MVP deliverable by the capstone deadline. The selected mode and rationale must be documented.
 
 ### Sample Data
 

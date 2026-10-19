@@ -8,7 +8,7 @@
 | R-02 | Missing or incomplete news | Biased or incomplete sentiment statistics | Validate fields and display data-coverage warnings |
 | R-03 | Financial language misclassified by baseline NLP | Incorrect sentiment labels | Evaluate against manually labeled financial text |
 | R-04 | LLM generates inconsistent interpretations | Unreliable contextual results | Constrain output, validate the response, and compare with source text |
-| R-05 | News timestamps do not align with market data | Misleading comparisons | Use the Nasdaq calendar and America/New_York timezone; test the close-to-close assignment rule and disclose any approved calendar-day fallback |
+| R-05 | News timestamps do not align with market data | Misleading comparisons | Use the NSE calendar and Asia/Kolkata timezone; test the close-to-close assignment rule and disclose any approved calendar-day fallback |
 | R-06 | Correlation is interpreted as causation | Unsupported conclusions | Describe results as exploratory and document confounding factors |
 | R-07 | Python dependency incompatibility | Installation or runtime failures | Use a compatible Python version and lock dependencies |
 | R-08 | API key exposed in Git | Credential misuse | Use environment variables and exclude secret files |
