@@ -14,7 +14,7 @@ The planning checkpoint retains Nasdaq session alignment: this is a single-excha
 
 **Language/Version**: Python 3.12 (`.python-version`).
 
-**Primary Dependencies**: uv; pandas for CSV/table handling; `vadersentiment` for baseline scoring; Streamlit for the UI based on the project charter; Plotly for the four charts. Finnhub client and one Nasdaq-calendar library are conditional on research. Audit current dependencies before implementation; avoid unrelated NLP/ML or framework dependencies.
+**Primary Dependencies**: uv; pandas for CSV/table handling; `vadersentiment` for baseline scoring; Streamlit for the UI based on the project charter; Plotly for the four charts. Finnhub client is conditional on research. Nasdaq sessions use the selected official-source annual schedule ledger and a small adapter; add no calendar package unless separate verification demonstrates an exact Nasdaq calendar is preferable. Audit current dependencies before implementation; avoid unrelated NLP/ML or framework dependencies.
 
 **Storage**: Local CSV inputs and in-memory analysis results; no database.
 
@@ -100,7 +100,7 @@ data/
 
 ## Delivery Phases and Risk Order
 
-1. **Planning and verification gates**: Resolve Spec Kit feature path; document CSV schemas and date/time policy; verify Finnhub and candidate market providers and terms; verify a calendar library's Nasdaq schedule behavior. Provider uncertainty is the largest delivery risk, so CSV and core logic must not wait on it.
+1. **Planning and verification gates**: Resolve Spec Kit feature path; document CSV schemas and date/time policy; verify Finnhub and candidate market providers and terms; human-review the initial version-controlled Nasdaq annual schedule ledger against official sources and verify price-bar date semantics before implementing alignment. Provider uncertainty is the largest delivery risk, so CSV and core logic must not wait on it.
 2. **Foundation**: Audit dependencies; establish settings, normalized data models, error/status types, and pytest/Ruff conventions. Keep Python 3.12 and uv/lockfile workflow.
 3. **Offline core**: Implement CSV news/market ingestion, validation/deduplication, separate VADER scoring, separate aggregates, and no-network workflow. Prove it with tests before live integration.
 4. **Market comparison**: Implement Nasdaq assignment and return calculation with missing-data semantics; test boundaries, holidays, early closes, DST, and missing observations. The selected mode is market-session alignment; no runtime mode switching.

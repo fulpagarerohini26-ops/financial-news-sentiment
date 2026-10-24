@@ -1,6 +1,6 @@
 # Research and Verification Plan: Financial News Sentiment Analyzer
 
-**Status**: Provider behavior and terms have not been verified as of 2026-10-19. Items below are explicit pre-integration tasks, not claims about provider capabilities.
+**Status**: Nasdaq session-calendar approach selected on 2026-10-24. The annual source data still requires human review before it is considered supported. News and market-provider behavior and terms remain pre-integration verification tasks.
 
 This document records decisions necessary to implement the authoritative [specification](spec.md).
 
@@ -11,8 +11,8 @@ This document records decisions necessary to implement the authoritative [specif
 | Baseline sentiment | VADER compound: Positive `>= 0.05`, Negative `<= -0.05`, Neutral strictly between | Required by spec; dependency declared |
 | News input | CSV is the first complete path; Finnhub is the selected live-news candidate | Endpoint, fields, access, limits, and terms pending verification |
 | Market input | Provider-independent interface with CSV fallback | Live provider unselected; do not assume Finnhub free access includes historical prices |
-| Alignment | Nasdaq sessions, `America/New_York`, `(previous close, current close]` | Selected; verify calendar package and edge behavior before implementation |
-| Calendar-day fallback | Not selected because current evidence identifies no mandatory deliverable threatened by the bounded single-calendar work | Reconsider only before implementation with concrete schedule evidence |
+| Alignment | Nasdaq sessions, `America/New_York`, `(previous close, current close]` | Requirement retained; selected approach is the official-source, version-controlled annual schedule ledger below; do not use the tested XNAS-to-XNYS alias. No year is yet verified by a committed reviewed ledger. |
+| Calendar-day fallback | Not selected; current evidence identifies no mandatory deliverable threatened by the bounded annual-ledger verification and adapter work | Reconsider only before implementation with concrete schedule evidence |
 | UI/charts | Streamlit and Plotly, consistent with the charter and existing dependencies | Planned, not implemented |
 | LLM | Outside mandatory MVP | Deferred |
 
@@ -36,7 +36,76 @@ Select a provider only after documenting evidence. Keep `MarketDataSource` provi
 
 ## Nasdaq Calendar Verification Gate
 
-Evaluate a maintained calendar library (candidate: `exchange-calendars`) for Nasdaq/XNAS schedule coverage, holidays, early closes, DST, timezone-aware open/close instants, Python 3.12 compatibility, license, maintenance, and API behavior. Verify controlled dates against authoritative calendar examples. Keep calendar lookup behind a narrow interface. If no compatible library meets these checks, document the issue and reassess schedule risk before implementation; do not silently switch alignment modes.
+The earlier library-evaluation gate is resolved as a design choice in [Calendar Approach Decision](#calendar-approach-decision-2026-10-24); the tested `exchange-calendars` XNAS alias is rejected. Before implementation, a human must verify and review the initial annual schedule ledger, its official source references, the preceding-session boundary needed for return calculations, date coverage and fail-closed behavior, and storage terms. No alias or generic weekday calendar may stand in for Nasdaq.
+
+### Candidate Validation: 2026-10-19
+
+The project targets Python 3.12. The plan names `exchange-calendars` as a candidate, but it is not declared in `pyproject.toml` or `uv.lock`. Version `4.13.2` was installed in the local project venv for this validation only; this did not add a project dependency.
+
+**Result: candidate blocked for direct Nasdaq use.** `get_calendar_names(include_aliases=False)` does not include `XNAS`. Although `XNAS` and `NASDAQ` appear when aliases are included, both `get_calendar("XNAS")` and `get_calendar("NASDAQ")` return an object whose name is `XNYS`. This is an NYSE calendar, not an exact Nasdaq calendar. Do not count matching hours on the selected sample dates as verification of Nasdaq calendar identity or use this alias in an adapter.
+
+For evidence only, the returned XNYS schedule was compared with the official Nasdaq schedule:
+
+| Date / case | Expected Nasdaq session (Eastern) | Expected Nasdaq session (UTC) | Actual returned XNYS-alias schedule | Result as Nasdaq validation |
+|---|---|---|---|---|
+| 2026-11-24, full session | 09:30-16:00 EST | 14:30-21:00 UTC | 14:30-21:00 UTC | Not accepted; XNYS alias |
+| 2026-11-28, Saturday | No session | No session | No session | Not accepted; XNYS alias |
+| 2026-11-26, Thanksgiving | No session | No session | No session | Not accepted; XNYS alias |
+| 2026-11-27, early close | 09:30-13:00 EST | 14:30-18:00 UTC | 14:30-18:00 UTC | Not accepted; XNYS alias |
+| 2026-10-30, before DST ends | 09:30-16:00 EDT | 13:30-20:00 UTC | 13:30-20:00 UTC | Not accepted; XNYS alias |
+| 2026-11-02, after DST ends | 09:30-16:00 EST | 14:30-21:00 UTC | 14:30-21:00 UTC | Not accepted; XNYS alias |
+
+The observed XNYS schedule converts to `America/New_York` at offset `-04:00` on October 30 and `-05:00` on November 2, with both full sessions opening at 09:30 local time. The hours happen to match the published Nasdaq examples, including Saturday and Thanksgiving closures and the 1:00 p.m. ET early close, but they are XNYS output and are not accepted as Nasdaq validation. The automated verification module refuses to treat the alias as XNAS; its canonical-identifier and six schedule checks remain expected-failure until an exact Nasdaq calendar is available.
+
+The installed calendar's locally available schedule spans 2006-10-19 through 2027-10-19. `is_session`/`sessions_in_range` reject dates outside the known range with `DateOutOfBounds`; slicing `.schedule.loc[...]` outside the range instead returns an empty frame, so callers must validate bounds and must not interpret that empty frame as a holiday. Calendar definitions/schedules are supplied by the installed package and queried locally; the library does not fetch a live Nasdaq schedule at request time. Accuracy still depends on package data being current and covering the requested date.
+
+Official comparison references: [Nasdaq 2026 U.S. market holidays and trading hours](https://www.nasdaq.com/market-activity/stock-market-holiday-schedule) and [Nasdaq Trader calendar](https://www.nasdaqtrader.com/Trader.aspx?id=Calendar). Library references: [exchange-calendars repository and documentation](https://github.com/gerrymanoim/exchange_calendars) and [PyPI release history](https://pypi.org/project/exchange-calendars/).
+
+The 2026-10-19 mitigation paragraph above is historical; the decision below supersedes it.
+
+### Calendar Approach Decision: 2026-10-24
+
+**Decision: use option 2, a version-controlled, manually verified Nasdaq schedule ledger and a small session-calendar adapter.** This is the simplest approach supported by current evidence and the student-capstone constraints. Do not use `exchange-calendars==4.13.2` for Nasdaq: `XNAS` and `NASDAQ` resolve to `XNYS`, so matching hours do not establish Nasdaq identity. `pandas-market-calendars` and other packages have not been verified and are not selected. Do not add a calendar dependency or implement the adapter as part of this decision. At decision time, the ledger is not yet committed and reviewed, so this is a selected approach, not a claim that an operational calendar exists.
+
+**Authority and coverage policy**
+
+- Source of truth: [Nasdaq U.S. Stock Market Holiday Schedule and trading hours](https://www.nasdaq.com/market-activity/stock-market-holiday-schedule); [Nasdaq Trader calendar](https://www.nasdaqtrader.com/Trader.aspx?id=Calendar). The Nasdaq Trading Calendar page also links year-specific calendar downloads, including [2025](https://www.nasdaqtrader.com/content/technicalsupport/2025tradingcalendar.pdf) and [2026](https://www.nasdaq.com/trading-calendar).
+- First target year: **2026 only**, after a human has reviewed the complete year's official schedule and committed the verified ledger. The 2026 Nasdaq page currently lists full closures on Jan 1, Jan 19, Feb 16, Apr 3, May 25, Jun 19, Jul 3, Sep 7, Nov 26, and Dec 25, and early closes on Nov 27 and Dec 24 at 1:00 p.m. Eastern. These observed page entries are a transcription aid, not a claim that a verified project ledger already exists.
+- 2025 is not initially supported as a full year. Before calculating the first 2026 close-to-close return, separately verify the immediately preceding Nasdaq session and close-date boundary (expected to require the 2025 calendar) against the official 2025 calendar. Until verified, that initial return must be unavailable rather than inferred.
+- 2027 and later are out of coverage unless and until the official annual schedule is published, reviewed, and committed in the ledger. Publication alone does not mark a year supported; do not infer any year from recurring holiday rules.
+- A year is supported only if its ledger records the year, `America/New_York`, official source URL(s), source checked date, reviewer, full closure list, early-close list, and review status. Confirm any applicable terms for storing/redistributing this derived schedule before committing it.
+
+**Session rules**
+
+- The calendar covers Nasdaq regular trading sessions only; extended hours are excluded.
+- On a verified regular weekday, regular open is 09:30 and regular close is 16:00 in `America/New_York`, unless the official annual schedule gives a special session time.
+- Exclude each official full-closure date. On each official early-close date, retain the session with the listed close (the current 2026 source says 13:00 Eastern on Nov 27 and Dec 24); the regular open remains 09:30 unless Nasdaq publishes a different open.
+- Store dates and local clock times as schedule data and use Python's IANA `ZoneInfo("America/New_York")` at runtime. Never hard-code a fixed UTC offset: DST determines whether 09:30 is 13:30 UTC (EDT) or 14:30 UTC (EST), and similarly shifts closes. Convert schedule instants to UTC only at the boundary where a UTC instant is required.
+- If Nasdaq publishes a correction or an unscheduled closure/changed session, update the version-controlled ledger from the official notice, record the notice URL and checked date, and add/update the date-specific test in the same reviewed change. Until that update is reviewed, affected dates are not treated as verified sessions.
+
+**Coverage and failure behavior**
+
+Expose the exact verified date range/year set through the adapter. Requests outside it must raise/return an explicit out-of-coverage result; they must not be treated as holidays, ordinary weekdays, or silently extrapolated. In-range weekends and listed holidays return no session. Missing or malformed annual data is a configuration/coverage error, not an empty schedule. If the yearly source has not yet been manually verified, that year is unsupported.
+
+**Daily-bar alignment contract**
+
+The live stock-price provider remains unselected. Its adapter must first document and test the provider's daily timestamp meaning, timezone, session-date convention, and adjustment basis. It must map each daily bar to the provider's documented Nasdaq trading-date label, then join by that canonical `trading_date`; it must not take the UTC calendar date or assume a timestamp convention without evidence. Reject or report bars that cannot be mapped to a verified session. For return calculation, request/retain the immediately preceding Nasdaq session close and never substitute the last available non-consecutive close. If the provider's timestamp semantics cannot be established, market alignment is unavailable pending verification; this does not authorize a calendar-day fallback.
+
+**Automated verification plan**
+
+The isolated calendar tests must use the committed, reviewed annual ledger and assert both the exact session label and UTC open/close instants, plus the `America/New_York` equivalents:
+
+- Normal full session: 2026-11-24, 09:30-16:00 EST / 14:30-21:00 UTC.
+- Weekend: 2026-11-28 returns no session.
+- Full holiday: 2026-11-26 Thanksgiving returns no session.
+- Early close: 2026-11-27, 09:30-13:00 EST / 14:30-18:00 UTC.
+- DST: 2026-10-30 returns 09:30-16:00 EDT / 13:30-20:00 UTC; 2026-11-02 returns 09:30-16:00 EST / 14:30-21:00 UTC.
+- Coverage: dates before/after verified years produce the explicit out-of-coverage outcome, not an empty holiday result; missing and unreviewed ledgers fail closed.
+- Price-bar mapping: controlled provider timestamp fixtures around DST map to the documented session-date label, with non-session dates and ambiguous timestamp conventions rejected.
+
+The existing `tests/verification/test_nasdaq_calendar.py` characterizes the rejected `exchange-calendars` candidate and its XNYS alias; its expected failures are evidence of that blocker, not tests of the selected annual-ledger adapter. A future adapter requires its own passing tests before implementation is accepted.
+
+**Remaining human verification**: review and commit the full 2026 ledger against the official Nasdaq schedule; verify the 2025-12-31 preceding-session boundary before making the first 2026 return; verify the right to store the derived dates in version control; verify the selected market provider's daily-bar timestamp semantics and price basis; and add 2027 only after its official schedule is published and checked. No stock-price provider is selected. Nasdaq-session alignment remains the requirement; no calendar-day fallback is selected. No concrete mandatory MVP deliverable is currently shown to be threatened by this approach.
 
 ## Data and Rule Decisions
 
