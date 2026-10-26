@@ -12,10 +12,10 @@ This document defines measurable conditions for accepting the first working rele
 | AC-02 | Date range | The user can select a valid date range for the news query. |
 | AC-03 | News retrieval | A verified Finnhub response or local CSV dataset is converted into the documented logical news-record structure. |
 | AC-04 | Empty response | If no news is available, the application displays an informative message rather than failing. |
-| AC-05 | Headline sentiment | Every valid non-empty headline receives a numerical sentiment score and a label. |
-| AC-06 | Summary sentiment | Every available non-empty summary receives a score and label; missing summaries are handled explicitly. |
-| AC-07 | Label mapping | VADER compound scores <= -0.05 are Negative, >= 0.05 are Positive, and strictly between -0.05 and 0.05 are Neutral; exact boundaries are tested. |
-| AC-08 | Aggregate statistics | Headline and summary sentiment statistics are calculated separately, using only available valid scores. |
+| AC-05 | Headline sentiment | Every valid non-empty headline receives a VADER compound score and a label; the original article is preserved and associated with the result. |
+| AC-06 | Summary sentiment | Summary scoring is deferred; missing summaries do not prevent headline scoring and summaries do not contribute to the baseline score. |
+| AC-07 | Label mapping | VADER compound scores <= -0.05 are Negative, >= 0.05 are Positive, and strictly between -0.05 and 0.05 are Neutral; configurable threshold boundaries are tested. |
+| AC-08 | Aggregate statistics | The baseline reports analyzed totals, per-label counts and percentages, and average compound score; empty input yields zero counts/percentages and no average. |
 | AC-09 | Sentiment charts | The application displays sentiment distribution and sentiment trends for the selected period; plotted values match the underlying records and aggregation. |
 | AC-10 | Price comparison | The application displays stock-price trends and a sentiment-versus-price comparison using the selected alignment mode and documented close-to-close return calculation. |
 | AC-11 | LLM extension | If implemented, contextual LLM results are clearly separated from baseline results. |

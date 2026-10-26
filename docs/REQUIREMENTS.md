@@ -41,23 +41,19 @@ Missing optional fields shall not cause the entire application to fail.
 
 ### FR-05: Headline Sentiment Analysis
 
-The application shall calculate a sentiment score for each available news headline using the selected baseline NLP method.
+The baseline milestone calculates a VADER compound score for each valid headline, using only the headline text. Empty or whitespace-only headlines are rejected by the analyzer rather than classified as Neutral. Summary analysis is a later extension.
 
 ### FR-06: Summary Sentiment Analysis
 
-The application shall calculate a sentiment score for each non-empty news summary.
-
-If a summary is missing or empty, the application shall indicate that summary sentiment is unavailable.
+Independent summary sentiment is planned but is not implemented in the current headline-only baseline. A missing summary does not prevent headline analysis.
 
 ### FR-07: Sentiment Classification
 
-The application shall classify analyzed text using VADER compound scores: Negative at <= -0.05, Positive at >= 0.05, and Neutral strictly between those boundaries.
+The baseline shall classify VADER compound scores using configurable thresholds, defaulting to Negative at <= -0.05, Positive at >= 0.05, and Neutral strictly between those boundaries.
 
 ### FR-08: Aggregate Sentiment Analysis
 
-The application shall calculate aggregate sentiment measures for the selected company and date range.
-
-Headline and summary sentiment shall be reported separately.
+The baseline shall calculate total, per-label counts and percentages, and mean compound score for a collection of headline results. Separate summary aggregates are deferred until summary analysis is implemented.
 
 ### FR-09: Sentiment Visualization
 

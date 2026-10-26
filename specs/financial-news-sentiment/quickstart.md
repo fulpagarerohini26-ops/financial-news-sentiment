@@ -1,6 +1,6 @@
-# Quickstart Plan: Financial News Sentiment Analyzer
+# Quickstart: Financial News Sentiment Analyzer
 
-**Status**: Planned instructions. The app entry point and CSV loader do not yet exist; these commands do not assert a runnable implementation.
+**Status**: The CSV news adapter and headline-only VADER baseline are implemented. The Streamlit app and market-data workflow remain planned.
 
 ## Prerequisites
 
@@ -17,29 +17,30 @@ From the repository root in PowerShell:
 uv sync --locked
 ```
 
-Use `uv run` so the selected Python and lockfile are honored. Confirm final commands after the application entry point is implemented.
+Use `uv run --locked` so the selected Python and lockfile are honored.
 
-## Planned CSV-Only Run
+## Offline Baseline Demonstration
 
 ```powershell
-uv run streamlit run src/financial_news_sentiment/app.py
+uv run --locked python scripts/demo_baseline_sentiment.py
 ```
 
-Select CSV sources and provide news/market paths, ticker, and inclusive date range. The core workflow must run with networking blocked and without API keys or LLM setup. It must label local/sample data and disclose provenance and coverage. See [contracts/data-sources.md](contracts/data-sources.md) for planned CSV fields and timestamp/close conventions.
+The script reads the clearly synthetic `data/samples/synthetic_news_articles.csv` through the offline CSV adapter, analyzes each normalized article headline with VADER, and prints article IDs, tickers, headlines, compound scores, and labels. It makes no network requests and requires no API key. Summary sentiment, the Streamlit interface, and stock-price comparison are not implemented in this milestone.
 
 ## Optional Live News
 
 The `finnhub-python` SDK is already declared and locked at 2.4.29. Its basic client methods are documented in the [Finnhub SDK interface check](research.md#python-sdk-interface-check-2026-10-26). This does not complete the live-news verification gate: endpoint/date behavior, response-field semantics, access, limits, terms, attribution, and permitted use still need documented evidence. If verified and permitted, configure credentials using an environment variable or ignored local configuration documented by the implementation. Never commit a credential or place it in a tracked example. CSV must remain usable when credentials are absent or live access fails.
 
-## Planned Tests and Quality Checks
+## Tests and Quality Checks
 
 ```powershell
-uv run pytest
-uv run ruff check .
+uv run --locked pytest tests/unit/test_baseline_sentiment.py
+uv run --locked pytest
+uv run --locked ruff check .
 ```
 
-The default test suite must not call live providers. The CSV integration test must pass without network access or provider credentials. Record actual outputs in project evidence; this plan reports no executed test results.
+Tests use controlled input and mocked provider requests; they do not make live requests. See [docs/METHODOLOGY.md](../../docs/METHODOLOGY.md) for the current baseline policy and limitations.
 
 ## Expected Behavior
 
-For valid data, show separate headline and available-summary scores/aggregates, validation and coverage counts, session alignment, and all four required visualizations. For empty data, invalid input, or source failure, show an informative status without fabricated neutral sentiment or presenting incomplete data as complete. Explain that sentiment/price comparison is exploratory, not prediction or investment advice.
+The future application is expected to show valid headline and available-summary analysis, validation and coverage counts, session alignment, and visualizations. The current baseline does not score summaries or implement the UI, stock-price comparison, or any prediction. Sentiment results are estimates, not investment advice.

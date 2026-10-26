@@ -110,7 +110,7 @@ The API documentation confirms the request and response schema, but not the proj
 |---|---|---|
 | ticker | Company being analyzed | Required; set from the requested symbol |
 | headline | Text for headline sentiment | Required; unusable articles are rejected |
-| summary | Additional article text | Optional; score only when non-empty |
+| summary | Additional article text | Optional; retained in the normalized record but excluded from the current headline-only baseline |
 | published_at | Publication date and time | Required; converted from Unix seconds to UTC |
 | source | News publisher | Optional |
 | article_url | Link to the article | Optional, subject to provider response |
