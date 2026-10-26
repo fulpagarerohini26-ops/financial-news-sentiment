@@ -14,6 +14,10 @@ Documentation: https://finnhub.io/docs/api
 
 The application will use the Finnhub Company News API after verifying provider availability, authentication requirements, response fields, usage limits, and terms of service. No unverified capability or free quota is assumed. The API key must be configured locally and must not be committed to the repository.
 
+The project dependency is `finnhub-python` (locked at 2.4.29). Its client is imported as `finnhub`; `Client(api_key=...)` provides `company_news(symbol, _from, to)`, where `_from` is the Python parameter name for the API's `from` date parameter. The SDK also exposes `stock_candles(...)`, but its presence does not establish that historical daily prices are available under the project's account or permitted terms. See the dated interface check and unresolved verification gate in [research.md](../specs/financial-news-sentiment/research.md#python-sdk-interface-check-2026-10-26).
+
+The SDK interface check verifies how to invoke the client, not Finnhub's current entitlement, response-field semantics, date inclusivity, timestamp timezone, quotas, or licensing. Do not mark live news or market retrieval available until the applicable verification gate is completed. Keep provider objects at the adapter boundary and normalize verified fields to the logical schema below; CSV remains the offline path.
+
 ## 3. Required News Fields
 
 | Logical field | Purpose | Handling |

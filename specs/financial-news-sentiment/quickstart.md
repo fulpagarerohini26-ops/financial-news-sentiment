@@ -29,7 +29,7 @@ Select CSV sources and provide news/market paths, ticker, and inclusive date ran
 
 ## Optional Live News
 
-Finnhub remains gated on recorded verification of endpoint/field mapping, authentication, free-tier availability and limits, terms, attribution, and permitted use. If verified and permitted, configure credentials using an environment variable or ignored local configuration documented by the implementation. Never commit a credential or place it in a tracked example. CSV must remain usable when credentials are absent or live access fails.
+The `finnhub-python` SDK is already declared and locked at 2.4.29. Its basic client methods are documented in the [Finnhub SDK interface check](research.md#python-sdk-interface-check-2026-10-26). This does not complete the live-news verification gate: endpoint/date behavior, response-field semantics, access, limits, terms, attribution, and permitted use still need documented evidence. If verified and permitted, configure credentials using an environment variable or ignored local configuration documented by the implementation. Never commit a credential or place it in a tracked example. CSV must remain usable when credentials are absent or live access fails.
 
 ## Planned Tests and Quality Checks
 

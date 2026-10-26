@@ -9,7 +9,7 @@ This document records decisions necessary to implement the authoritative [specif
 | Topic | Planning decision | Status |
 |---|---|---|
 | Baseline sentiment | VADER compound: Positive `>= 0.05`, Negative `<= -0.05`, Neutral strictly between | Required by spec; dependency declared |
-| News input | CSV is the first complete path; Finnhub is the selected live-news candidate | Endpoint, fields, access, limits, and terms pending verification |
+| News input | CSV is the first complete path; Finnhub is the selected live-news candidate | SDK method interface checked; endpoint semantics, fields, access, limits, and terms pending verification |
 | Market input | Provider-independent interface with CSV fallback | Live provider unselected; do not assume Finnhub free access includes historical prices |
 | Alignment | Nasdaq sessions, `America/New_York`, `(previous close, current close]` | Requirement retained; selected approach is the official-source, version-controlled annual schedule ledger below; do not use the tested XNAS-to-XNYS alias. No year is yet verified by a committed reviewed ledger. |
 | Calendar-day fallback | Not selected; current evidence identifies no mandatory deliverable threatened by the bounded annual-ledger verification and adapter work | Reconsider only before implementation with concrete schedule evidence |
@@ -21,6 +21,22 @@ This document records decisions necessary to implement the authoritative [specif
 Use current official documentation and terms. The repository's starting links are [Finnhub API documentation](https://finnhub.io/docs/api) and [Finnhub](https://finnhub.io/); these links are not evidence that requirements have been met.
 
 Before implementing a live adapter, record verification date and exact endpoint/request parameters; ticker and date filtering; date inclusivity and historical availability; response field names/types; timestamp semantics/timezone; headline, summary, URL, source, and ID availability; authentication; free-tier availability and limits; rate limits/error responses; terms/licensing; attribution; retention/redistribution rules; and permitted classroom use. Capture official references or permitted excerpts. Map only verified fields. If terms do not permit the planned use, do not integrate; keep CSV operational.
+
+### Python SDK Interface Check: 2026-10-26
+
+The project already declares `finnhub-python>=2.4.29` in `pyproject.toml`, and `uv.lock` resolves it to `2.4.29`. The project virtual environment has that version installed. Its public import is `import finnhub`; the checked client interface is `finnhub.Client(api_key=...)`.
+
+The installed SDK source confirms these call shapes:
+
+| Client method | Parameters | SDK route | Response handling |
+|---|---|---|---|
+| `company_news(symbol, _from, to)` | Symbol and date arguments; `_from` is translated to the request parameter `from` | `/company-news` | Returns endpoint JSON without SDK normalization; verify response shape and fields against current API documentation |
+| `stock_candles(symbol, resolution, _from, to)` | Symbol, resolution such as `D`, and Unix-second bounds | `/stock/candle` | Returns endpoint JSON without SDK normalization; verify candle status/arrays and timestamp semantics before mapping |
+| `news_sentiment(symbol)` | Symbol | `/news-sentiment` | Returns endpoint JSON without SDK normalization; it does not replace the required per-article headline/summary scoring |
+
+The SDK defines `FinnhubAPIException` (with `status_code`) and `FinnhubRequestException`; the checked client also sets a 10-second default request timeout. These facts describe the installed SDK code only. They do not verify Finnhub's current endpoint access, date inclusivity, timestamp meaning, returned fields, account eligibility, quotas, rate limits, service behavior, or terms. The SDK check therefore does **not** close T005, authorize a live adapter, or establish that Finnhub is suitable as the MVP price source. No live request was made as part of this check.
+
+Implementation implication: use the SDK behind the planned news-source boundary, instantiate it only when live retrieval is requested and credentials exist, map returned records to the provider-neutral schema, and translate API/request failures into the project's distinct source statuses. Keep CSV as the credential-free offline path. Validate candle status/array consistency and daily-bar timestamp semantics before considering any candle data for Nasdaq-session returns.
 
 ## Market-Data Provider Verification Gate
 
@@ -126,4 +142,4 @@ The charter/spec do not state a capstone deadline or team-capacity estimate. Bas
 
 ## Dependency Audit
 
-Current `pyproject.toml` declares Finnhub, Matplotlib, NumPy, pandas, Plotly, scikit-learn, Streamlit, TextBlob, and VADER. The baseline plan clearly needs pandas, VADER, Streamlit, and Plotly. Audit direct/transitive needs and remove unused direct dependencies as a deliberate configuration task; retain uv lockfile reproducibility. Add a Finnhub client and calendar library only after their gates. No LLM client or paid service is required.
+Current `pyproject.toml` declares Finnhub, Matplotlib, NumPy, pandas, Plotly, scikit-learn, Streamlit, TextBlob, and VADER. The baseline plan clearly needs pandas, VADER, Streamlit, and Plotly; `finnhub-python` is already declared and locked at 2.4.29, although live integration remains gated by T005. Audit direct/transitive needs and remove unused direct dependencies as a deliberate configuration task; retain uv lockfile reproducibility. Add no calendar library unless its separate verification demonstrates an exact Nasdaq calendar is preferable to the selected reviewed-ledger approach. No LLM client or paid service is required.
