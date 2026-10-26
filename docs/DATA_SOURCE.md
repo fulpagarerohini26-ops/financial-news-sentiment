@@ -14,6 +14,36 @@ Documentation: https://finnhub.io/docs/api
 
 The application will use the Finnhub Company News API after verifying provider availability, authentication requirements, response fields, usage limits, and terms of service. No unverified capability or free quota is assumed. The API key must be configured locally and must not be committed to the repository.
 
+### Finnhub Exchange-Symbol Smoke Test
+
+| Test detail | Result |
+|---|---|
+| Run date | 2026-10-26 |
+| Script | [`scripts/test_finnhub_exchange.py`](../scripts/test_finnhub_exchange.py) |
+| Endpoint | `GET /api/v1/stock/symbol` |
+| Exchange parameter | `US` |
+| Outcome | Passed; HTTP `200`, `31,122` records returned, and the script completed successfully |
+
+The script printed these first three records:
+
+| Symbol | Description | Type | Currency |
+|---|---|---|---|
+| `NGIF` | NUVEEN GLOBAL INFRA FUND/ETF | ETP | USD |
+| `CABGY` | CARLSBERG A-B-SPON ADR | ADR | USD |
+| `HNWAF` | HANWA CO LTD | Common Stock | USD |
+
+This is a live, point-in-time smoke-test result, not a fixed expected count or a verified Nasdaq ticker universe. It confirms that, during this run, the configured credential could make this symbol-list request for exchange code `US` and receive a JSON list. The sample includes different security types, and the script does not inspect or verify each record's listing venue. The `US` parameter must not be interpreted as proof that every returned symbol is Nasdaq-listed.
+
+**What this test does not verify:** Company News access or response fields; historical price/candle access; Nasdaq-only instrument coverage; date or timestamp semantics; free-tier quotas or rate limits; terms, attribution, retention, or classroom-use permissions. Do not use this result alone to approve Finnhub news or market-data integration. Those checks remain part of the verification gates in [research.md](../specs/financial-news-sentiment/research.md#finnhub-news-verification-gate).
+
+To repeat the check from the repository root, configure `FINNHUB_API_KEY` and `FINNHUB_EXCHANGE_CODE` in the ignored local `.env` file, then run:
+
+```powershell
+uv run python scripts/test_finnhub_exchange.py
+```
+
+The script does not print the API key or request URL. Keep credentials out of command history, logs, and tracked files.
+
 The project dependency is `finnhub-python` (locked at 2.4.29). Its client is imported as `finnhub`; `Client(api_key=...)` provides `company_news(symbol, _from, to)`, where `_from` is the Python parameter name for the API's `from` date parameter. The SDK also exposes `stock_candles(...)`, but its presence does not establish that historical daily prices are available under the project's account or permitted terms. See the dated interface check and unresolved verification gate in [research.md](../specs/financial-news-sentiment/research.md#python-sdk-interface-check-2026-10-26).
 
 The SDK interface check verifies how to invoke the client, not Finnhub's current entitlement, response-field semantics, date inclusivity, timestamp timezone, quotas, or licensing. Do not mark live news or market retrieval available until the applicable verification gate is completed. Keep provider objects at the adapter boundary and normalize verified fields to the logical schema below; CSV remains the offline path.
