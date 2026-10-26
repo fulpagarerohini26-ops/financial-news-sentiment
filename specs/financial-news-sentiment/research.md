@@ -121,7 +121,13 @@ The isolated calendar tests must use the committed, reviewed annual ledger and a
 
 The existing `tests/verification/test_nasdaq_calendar.py` characterizes the rejected `exchange-calendars` candidate and its XNYS alias; its expected failures are evidence of that blocker, not tests of the selected annual-ledger adapter. A future adapter requires its own passing tests before implementation is accepted.
 
-**Remaining human verification**: review and commit the full 2026 ledger against the official Nasdaq schedule; verify the 2025-12-31 preceding-session boundary before making the first 2026 return; verify the right to store the derived dates in version control; verify the selected market provider's daily-bar timestamp semantics and price basis; and add 2027 only after its official schedule is published and checked. No stock-price provider is selected. Nasdaq-session alignment remains the requirement; no calendar-day fallback is selected. No concrete mandatory MVP deliverable is currently shown to be threatened by this approach.
+**Remaining verification**: the 2026 ledger review and permission to store its derived dates are recorded in [Initial Ledger Review](#initial-ledger-review-2026-10-26). Verify the 2025-12-31 preceding-session boundary before making the first 2026 return, verify the selected market provider's daily-bar timestamp semantics and price basis, and add 2027 only after its official schedule is published and checked. No stock-price provider is selected. Nasdaq-session alignment remains the requirement; no calendar-day fallback is selected. No concrete mandatory MVP deliverable is currently shown to be threatened by this approach.
+
+### Initial Ledger Review: 2026-10-26
+
+The 2026 ledger is recorded in `data/reference/nasdaq_schedule_2026.json`. On 2026-10-26, the complete 2026 schedule was checked against the official Nasdaq Trader holiday schedule and its linked 2026 calendar PDF. The source lists full closures on January 1, January 19, February 16, April 3, May 25, June 19, July 3, September 7, November 26, and December 25, and early closes at 1:00 p.m. Eastern on November 27 and December 24. Reviewer: Rohini Fulpagare; approval to store the derived schedule in version control was confirmed for this ledger.
+
+This review supports only dates from 2026-01-01 through 2026-12-31. The 2025-12-31 preceding-session boundary remains unverified, so a close-to-close return requiring that prior session is not authorized by this ledger. 2027 and later remain out of coverage until an official annual schedule is published and reviewed. Market-provider timestamp semantics, price basis, and source selection remain unresolved.
 
 ## Data and Rule Decisions
 
