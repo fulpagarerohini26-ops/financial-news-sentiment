@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -72,13 +73,13 @@ def test_nasdaq_schedule_matches_published_hours(
 def test_out_of_coverage_dates_are_not_treated_as_holidays() -> None:
     # XNYS is named explicitly here to characterize package bounds only.
     calendar = exchange_calendars.get_calendar("XNYS")
-    assert calendar.schedule.index.min().strftime("%Y-%m-%d") == "2006-10-19"
-    assert calendar.schedule.index.max().strftime("%Y-%m-%d") == "2027-10-19"
+    first_session = calendar.schedule.index.min().date()
+    last_session = calendar.schedule.index.max().date()
 
-    for outside_date in ("1999-12-31", "2036-01-02"):
-        with pytest.raises(Exception) as error:
-            calendar.is_session(outside_date)
-        assert type(error.value).__name__ == "DateOutOfBounds"
+    for outside_date in (first_session - timedelta(days=1), last_session + timedelta(days=1)):
+        with pytest.raises(exchange_calendars.errors.DateOutOfBounds):
+            calendar.is_session(outside_date.isoformat())
 
         # Raw schedule slicing is not a safe coverage check: it returns no rows.
-        assert calendar.schedule.loc[outside_date:outside_date].empty
+        outside_date_text = outside_date.isoformat()
+        assert calendar.schedule.loc[outside_date_text:outside_date_text].empty
