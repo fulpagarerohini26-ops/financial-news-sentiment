@@ -208,6 +208,9 @@ An example configuration may be provided in `.env.example`, without any real cre
 
 Never commit API keys or other secrets.
 
+To make one controlled Company News request and print only the status, count,
+and a few sanitized fields, see the [Finnhub smoke-test procedure](docs/DATA_SOURCE.md#company-news-manual-smoke-test).
+
 ## 9. Running the Application
 
 The final application entry point and launch command will be confirmed during implementation.

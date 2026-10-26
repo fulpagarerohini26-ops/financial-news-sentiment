@@ -6,13 +6,67 @@ This document records the planned data sources, required fields, data-quality ex
 
 ## 2. Financial News Source
 
-Selected primary news provider: Finnhub, subject to verification before integration.
+Selected primary news provider: Finnhub.
 
 Official website: https://finnhub.io/
 
-Documentation: https://finnhub.io/docs/api
+Documentation: https://finnhub.io/docs/api/company-news
 
-The application will use the Finnhub Company News API after verifying provider availability, authentication requirements, response fields, usage limits, and terms of service. No unverified capability or free quota is assumed. The API key must be configured locally and must not be committed to the repository.
+Official OpenAPI specification: https://finnhub.io/static/swagger.json
+
+The official specification was checked on 2026-10-26. It documents the
+`GET /api/v1/company-news` endpoint, required query parameters `symbol`,
+`from`, and `to`, and API-key authentication through the `token` query
+parameter. The documented response is an array with `category`, `datetime`
+(Unix seconds), `headline`, `id`, `related`, `source`, `summary`, and `url`
+fields. The implementation sends the requested dates as `YYYY-MM-DD` and does
+not retry requests.
+
+`financial_news_sentiment.news.finnhub.FinnhubNewsClient` uses the existing
+`FINNHUB_API_KEY` configuration. Its timeout is 10 seconds. HTTP authentication
+failures (401/403), rate limiting (429), other HTTP/network failures, and
+invalid or malformed responses raise distinct provider exceptions; the token
+and token-bearing request URL are not included in those error messages.
+
+The normalized `NewsArticle` requires a non-empty headline and integer Unix
+publication timestamp. A missing or malformed required field rejects the
+response rather than inventing data or silently dropping an article. The
+provider article ID, summary, source, URL, category, and related-symbol text
+are optional and remain `None` when omitted. Publication timestamps are
+preserved as integer seconds and converted to timezone-aware UTC datetimes.
+Ticker is the normalized requested symbol.
+
+The client passes both caller-supplied dates directly as `from` and `to`;
+inclusive date-range semantics are the caller contract, but Finnhub's
+documentation does not specify boundary inclusivity. A one-time live request
+confirmed access for the configured account, ticker, and date range shown
+below; it did not verify exact date-boundary behavior, ongoing entitlement,
+quotas, retention rights, or terms of use.
+
+### Company-News Manual Smoke Test
+
+One controlled live request was made with the key in the ignored project
+`.env`:
+
+| Test detail | Result |
+|---|---|
+| Run date | 2026-10-26 |
+| Script | [`scripts/smoke_test_finnhub_news.py`](../scripts/smoke_test_finnhub_news.py) |
+| Ticker and dates | `AAPL`, `2026-10-20` through `2026-10-26` |
+| Outcome | Passed; HTTP `200`, 239 articles returned |
+
+To repeat the check manually with one chosen ticker/date range, run from the
+repository root:
+
+```powershell
+uv run python scripts/smoke_test_finnhub_news.py AAPL 2026-10-20 2026-10-26
+```
+
+The script prints the HTTP status, record count, and up to three sanitized
+publication-time/source/category/headline samples. An empty response is
+reported separately as a successful request with zero articles. It never
+prints the API key or request URL. Automated tests mock HTTP and do not make
+live requests.
 
 ### Finnhub Exchange-Symbol Smoke Test
 
@@ -34,7 +88,7 @@ The script printed these first three records:
 
 This is a live, point-in-time smoke-test result, not a fixed expected count or a verified Nasdaq ticker universe. It confirms that, during this run, the configured credential could make this symbol-list request for exchange code `US` and receive a JSON list. The sample includes different security types, and the script does not inspect or verify each record's listing venue. The `US` parameter must not be interpreted as proof that every returned symbol is Nasdaq-listed.
 
-**What this test does not verify:** Company News access or response fields; historical price/candle access; Nasdaq-only instrument coverage; date or timestamp semantics; free-tier quotas or rate limits; terms, attribution, retention, or classroom-use permissions. Do not use this result alone to approve Finnhub news or market-data integration. Those checks remain part of the verification gates in [research.md](../specs/financial-news-sentiment/research.md#finnhub-news-verification-gate).
+**What this test does not verify:** Company News account access or actual response behavior; historical price/candle access; Nasdaq-only instrument coverage; date-boundary behavior; free-tier quotas or terms, attribution, retention, or classroom-use permissions. Do not use this result alone to approve Finnhub market-data integration. Those checks remain part of the verification gates in [research.md](../specs/financial-news-sentiment/research.md#finnhub-news-verification-gate).
 
 To repeat the check from the repository root, configure `FINNHUB_API_KEY` and `FINNHUB_EXCHANGE_CODE` in the ignored local `.env` file, then run:
 
@@ -44,18 +98,18 @@ uv run python scripts/test_finnhub_exchange.py
 
 The script does not print the API key or request URL. Keep credentials out of command history, logs, and tracked files.
 
-The project dependency is `finnhub-python` (locked at 2.4.29). Its client is imported as `finnhub`; `Client(api_key=...)` provides `company_news(symbol, _from, to)`, where `_from` is the Python parameter name for the API's `from` date parameter. The SDK also exposes `stock_candles(...)`, but its presence does not establish that historical daily prices are available under the project's account or permitted terms. See the dated interface check and unresolved verification gate in [research.md](../specs/financial-news-sentiment/research.md#python-sdk-interface-check-2026-10-26).
+The project retains the `finnhub-python` dependency and its prior interface check, but this news adapter uses the already-declared `requests` library to keep provider HTTP handling explicit and isolated. The SDK's candle support does not establish that historical daily prices are available under the project's account or permitted terms. Keep CSV as the offline path.
 
-The SDK interface check verifies how to invoke the client, not Finnhub's current entitlement, response-field semantics, date inclusivity, timestamp timezone, quotas, or licensing. Do not mark live news or market retrieval available until the applicable verification gate is completed. Keep provider objects at the adapter boundary and normalize verified fields to the logical schema below; CSV remains the offline path.
+The API documentation confirms the request and response schema, but not the project's account entitlement, date inclusivity, quotas, or licensing. Do not treat live news or market retrieval as confirmed until the manual access check and applicable verification gates are completed.
 
 ## 3. Required News Fields
 
 | Logical field | Purpose | Handling |
 |---|---|---|
-| ticker | Company being analyzed | Required for company-level analysis |
-| headline | Text for headline sentiment | Required for headline scoring |
+| ticker | Company being analyzed | Required; set from the requested symbol |
+| headline | Text for headline sentiment | Required; unusable articles are rejected |
 | summary | Additional article text | Optional; score only when non-empty |
-| published_at | Publication date and time | Required for time-based aggregation |
+| published_at | Publication date and time | Required; converted from Unix seconds to UTC |
 | source | News publisher | Optional |
 | article_url | Link to the article | Optional, subject to provider response |
 | provider_article_id | Article identifier | Optional; useful for deduplication |
@@ -117,4 +171,4 @@ News coverage and publication times may vary between providers. Market data may 
 
 These limitations shall be considered when interpreting sentiment trends and price comparisons.
 
-Status: Draft — confirm actual API fields and market-data source during technical planning.
+Status: The Company News request/response schema and one live AAPL request are verified. Date-boundary behavior, ongoing account entitlement, usage terms, and the market-data provider remain unverified.
