@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
-import re
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from typing import Any
 
 import requests
 
 from financial_news_sentiment.news.models import NewsArticle
+from financial_news_sentiment.news.normalization import (
+    normalize_published_at,
+    validate_ticker,
+)
 from financial_news_sentiment.settings import get_finnhub_api_key
 
 _COMPANY_NEWS_URL = "https://finnhub.io/api/v1/company-news"
 _REQUEST_TIMEOUT_SECONDS = 10
-_TICKER_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]{0,19}\Z")
 
 
 class FinnhubNewsError(RuntimeError):
@@ -47,7 +49,7 @@ class FinnhubNewsClient:
         self, ticker: str, start_date: date, end_date: date
     ) -> list[NewsArticle]:
         """Return articles for the inclusive date range, or an empty list."""
-        normalized_ticker = _validate_ticker(ticker)
+        normalized_ticker = validate_ticker(ticker)
         _validate_date_range(start_date, end_date)
         api_key = get_finnhub_api_key()
 
@@ -108,15 +110,6 @@ class FinnhubNewsClient:
             ) from None
 
 
-def _validate_ticker(ticker: str) -> str:
-    if not isinstance(ticker, str) or not _TICKER_PATTERN.fullmatch(ticker.strip()):
-        raise ValueError(
-            "ticker must be 1-20 letters, digits, periods, or hyphens and start "
-            "with a letter or digit"
-        )
-    return ticker.strip().upper()
-
-
 def _validate_date_range(start_date: date, end_date: date) -> None:
     if (
         not isinstance(start_date, date)
@@ -144,8 +137,8 @@ def _normalize_article(item: object, ticker: str, index: int) -> NewsArticle:
             f"{context} is missing an integer Unix publication timestamp."
         )
     try:
-        published_at = datetime.fromtimestamp(timestamp, tz=UTC)
-    except (OverflowError, OSError, ValueError):
+        published_at, normalized_timestamp = normalize_published_at(timestamp)
+    except ValueError:
         raise FinnhubResponseError(
             f"{context} has an out-of-range Unix publication timestamp."
         ) from None
@@ -160,7 +153,7 @@ def _normalize_article(item: object, ticker: str, index: int) -> NewsArticle:
         ticker=ticker,
         headline=headline,
         published_at=published_at,
-        published_timestamp=timestamp,
+        published_timestamp=normalized_timestamp,
         provider_article_id=article_id,
         summary=_optional_text(item, "summary", context),
         source=_optional_text(item, "source", context),

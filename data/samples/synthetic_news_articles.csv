@@ -1,0 +1,4 @@
+provider_article_id,ticker,headline,published_at,summary,source,article_url,category,related
+900001,AAPL,"Synthetic test data: company reports stronger quarterly revenue",2026-10-20T09:15:00-04:00,"Illustrative positive-sounding sample; not a real company report.",Synthetic Test Wire,https://news.example.invalid/synthetic/900001,company,AAPL
+900002,MSFT,"Synthetic test data: fictional company faces unexpected operating costs",2026-10-21T14:30:00Z,,Synthetic Test Wire,https://news.example.invalid/synthetic/900002,company,MSFT
+900003,NVDA,"Synthetic test data: fictional company schedules an investor presentation",2026-10-22T10:00:00-04:00,,,https://news.example.invalid/synthetic/900003,company,
