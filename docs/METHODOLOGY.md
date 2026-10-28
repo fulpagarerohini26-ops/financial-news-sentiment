@@ -96,12 +96,24 @@ uv run pytest
 
 The demo and tests do not require Finnhub credentials or network access.
 
+## Baseline evaluation
+
+The repository includes an evaluation pipeline for manually labeled headline
+CSV files. Its checked-in dataset is a synthetic, fixture-authored example
+used to verify the pipeline only; it is not evidence of performance on real
+financial news. The evaluator reuses the existing VADER analyzer and reports
+accuracy, per-class precision/recall/F1, macro F1, class distribution,
+confusion matrix, excluded rows, and misclassifications. See
+[docs/EVALUATION.md](EVALUATION.md) for the CSV schema, labeling guide,
+zero-division policy, actual synthetic fixture output, limitations, and
+commands.
+
 ## Limitations
 
 This is a baseline sentiment classifier, **not a validated financial
 prediction model**, investment advice, or a forecast of stock-price movement.
 VADER is general-domain and may misread financial terminology, numeric events,
 negation scope, sarcasm, or context. Scores are descriptive text
-classifications; neither average is evidence of price impact. No manually
-labeled financial-news evaluation or prediction claim is made by this
-implementation.
+classifications; neither average is evidence of price impact. The evaluation
+fixture is synthetic and provides no manually labeled real financial-news
+evidence. No prediction claim is made by this implementation.

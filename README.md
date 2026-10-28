@@ -91,6 +91,17 @@ uv run python scripts/demo_baseline_sentiment.py
 
 The demo makes no network requests and labels its fixture as synthetic, not real financial news.
 
+Evaluate the VADER headline baseline against the checked-in synthetic pipeline fixture:
+
+```powershell
+uv run --locked python scripts/evaluate_vader_baseline.py
+```
+
+This fixture is not real financial news and its metrics are not evidence of
+real-world accuracy. See [docs/EVALUATION.md](docs/EVALUATION.md) for the
+dataset schema, labeling guide, measured synthetic results, and evaluation
+limitations.
+
 The application will prioritize local execution and free tools. External API usage and optional LLM inference may be subject to provider limits and hardware requirements.
 
 ## 5. High-Level Processing Workflow

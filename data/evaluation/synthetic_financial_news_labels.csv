@@ -1,0 +1,13 @@
+article_id,ticker,headline,human_label,summary,source,published_at,annotation_notes
+SYN-001,ACME,"Fictional Acme reports record revenue growth",Positive,,,,
+SYN-002,ACME,"Fictional Acme wins a major customer contract",Positive,,,,
+SYN-003,ACME,"Fictional Acme raises its dividend after strong cash flow",Positive,,,,
+SYN-004,ACME,"Fictional Acme expands operations following excellent demand",Positive,,,,
+SYN-005,ACME,"Fictional Acme reports a steep decline in quarterly revenue",Negative,,,,
+SYN-006,ACME,"Fictional Acme posts a disappointing loss and cuts its outlook",Negative,,,,
+SYN-007,ACME,"Fictional Acme faces severe production delays",Negative,,,,
+SYN-008,ACME,"Fictional Acme announces layoffs amid weakening demand",Negative,,,,
+SYN-009,ACME,"Fictional Acme schedules its annual shareholder meeting",Neutral,,,,
+SYN-010,ACME,"Fictional Acme files its quarterly report on Tuesday",Neutral,,,,
+SYN-011,ACME,"Fictional Acme reports a loss of 2% in the quarter",Neutral,,,,"Factual wording; label reflects expressed tone, not price implication"
+SYN-012,ACME,"Fictional Acme will present at an industry conference",Neutral,,,,

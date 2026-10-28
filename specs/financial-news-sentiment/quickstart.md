@@ -41,6 +41,17 @@ uv run --locked ruff check .
 
 Tests use controlled input and mocked provider requests; they do not make live requests. See [docs/METHODOLOGY.md](../../docs/METHODOLOGY.md) for the current baseline policy and limitations.
 
+## Headline Baseline Evaluation
+
+```powershell
+uv run --locked python scripts/evaluate_vader_baseline.py
+```
+
+By default, this evaluates the explicitly synthetic labeled fixture, not real
+financial news. Supply `--input path\to\labeled.csv` for a compatible
+manually-labeled dataset. See [docs/EVALUATION.md](../../docs/EVALUATION.md)
+for the schema, labeling guide, metrics, and limitations.
+
 ## Expected Behavior
 
 The future application is expected to show valid headline and available-summary analysis, validation and coverage counts, session alignment, and visualizations. The current baseline scores headlines and summaries independently, but does not implement the UI, stock-price comparison, or any prediction. Sentiment results are estimates, not investment advice or a validated price-prediction model.

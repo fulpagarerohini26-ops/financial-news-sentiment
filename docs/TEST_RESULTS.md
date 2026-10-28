@@ -52,3 +52,21 @@ The suite's seven expected failures are the existing `xfail` cases in the
 Nasdaq calendar verification tests; they are not reported as passing tests.
 This verification covers the baseline implementation and does not establish
 financial-news classification accuracy or predictive validity.
+
+## VADER Evaluation Pipeline: 2026-10-28
+
+The checked-in evaluation dataset is a small synthetic fixture, not real
+financial news. Running
+`uv run --locked python scripts/evaluate_vader_baseline.py` observed 12
+evaluated examples, zero excluded rows, and human class counts of 4 Positive,
+4 Negative, and 4 Neutral. Accuracy and macro F1 were both 0.8333. Two
+synthetic mismatches were observed: the fictional “steep decline” headline
+was predicted Neutral, and the factual “loss of 2%” headline was predicted
+Negative. These numbers validate pipeline execution only; they are not
+real-news performance results. Full evaluation semantics and the confusion
+matrix are documented in [EVALUATION.md](EVALUATION.md).
+
+The full repository suite on 2026-10-28 completed with **108 passed and 7
+expected failures** (`uv run --locked pytest`). Repository Ruff lint passed;
+format checking passed for the changed Python files. Pylance returned no
+diagnostics for the evaluation module, CLI script, or evaluation tests.
