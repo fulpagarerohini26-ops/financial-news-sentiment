@@ -52,6 +52,12 @@ financial news. Supply `--input path\to\labeled.csv` for a compatible
 manually-labeled dataset. See [docs/EVALUATION.md](../../docs/EVALUATION.md)
 for the schema, labeling guide, metrics, and limitations.
 
+For provenance/annotation validation and a deterministic development/held-out
+split, use `scripts/prepare_evaluation_dataset.py` as documented in the
+evaluation guide. It makes no network requests and only splits records whose
+local-evaluation rights are explicitly reviewed. Real-news data collection
+remains pending.
+
 ## Expected Behavior
 
 The future application is expected to show valid headline and available-summary analysis, validation and coverage counts, session alignment, and visualizations. The current baseline scores headlines and summaries independently, but does not implement the UI, stock-price comparison, or any prediction. Sentiment results are estimates, not investment advice or a validated price-prediction model.

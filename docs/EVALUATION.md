@@ -72,6 +72,149 @@ development data), and have a second person independently label a feasible
 subset before adjudication. Report disagreements and calculate agreement only
 if it is actually measured. The synthetic fixture has no second annotator.
 
+## Real-news dataset preparation (workflow only; collection pending)
+
+No real-news records have been collected or labeled for this project. The
+offline templates in `data/evaluation/real_news/` define separate files for
+article provenance, independent annotations, source permission reviews, and
+adjudication records. They contain no headlines or invented human annotations.
+The workflow is ready for lawful records, but real collection is currently
+blocked: account-specific research/storage/report rights and publisher rights
+have not been confirmed, and a second independent annotator has not yet been
+engaged.
+
+The articles CSV requires:
+
+| Column | Meaning |
+|---|---|
+| `internal_article_id` | Stable dataset-local identifier |
+| `ticker` | Validated ticker/company identifier |
+| `provider_name` | Provider or publisher |
+| `provider_article_id` | Optional source identifier, only when retention is permitted |
+| `source_url` | Optional URL, only when retaining it is permitted |
+| `headline`, `summary` | Text; summary is optional and is never used in this headline evaluation |
+| `published_at` | ISO 8601 timestamp with explicit offset |
+| `publication_timezone_handling` | How the original zone/offset and UTC normalization were handled |
+| `collected_at_utc` | Collection timestamp in UTC |
+| `dataset_version` | Dataset revision |
+| `provenance_ref` | Reference to the permitted source/collection record |
+| `permission_review_id` | Link to a reviewed permission record |
+| `usage_notes` | Applicable use, attribution, and retention notes |
+| `partition` | Blank before splitting; otherwise `development` or `heldout` |
+
+The annotation file is keyed by `internal_article_id` and stores a pseudonymous
+`annotator_code`, `annotator_role` (`primary` or `second`), UTC annotation
+timestamp, label, uncertainty flag, rationale, and guide version. One primary
+annotation is expected for an included article; a second annotation is
+independent and required only for a subset. Preserve both labels. The separate
+adjudication file records pending/resolved state, adjudicated label, UTC time,
+adjudicator code, and rationale; never overwrite the originals. Uncertain
+annotations are recorded with a blank label, `uncertain=yes`, and a reason.
+
+The permission review file records the terms URL and check date, actual
+account/plan verification, research, local storage, display, redistribution,
+and evaluation-report status (`allowed`, `prohibited`, or `unclear`),
+attribution and retention requirements, written-approval reference, and
+reviewer notes. The validator reports
+`review_cleared_for_local_evaluation` only when the review record is complete,
+the account plan is marked verified, required research/local-storage/report
+uses are marked allowed, and approval/evidence fields are present. This is a
+structured owner-entered review status—not a legal determination, provider
+grant, or proof that a record is permitted. Display and redistribution remain
+separately recorded. Missing permission evidence is reported as not reviewed
+or unclear, never inferred from populated article provenance.
+The report includes separate status counts for permission-review records and
+for article records linked to those reviews; an empty article template may
+therefore show a pending review while the linked-record counts are zero.
+
+As checked on 2026-10-28, Finnhub's public
+[Terms of Service](https://finnhub.io/terms-of-service) state that access
+does not grant ownership or IP rights, data must be deleted if a subscription
+ends, and data or derived results may not be redistributed/shared without
+written approval. Account-plan terms, private research/storage rights,
+evaluation-output use, retention duration, required attribution, written
+approval, and underlying publisher rights remain unresolved. The linked UTP
+policy and subscriber-agreement PDFs could not be retrieved for this review.
+Therefore **no collection or storage of real news has been authorized or
+started**. See [DATA_SOURCE.md](DATA_SOURCE.md) for the dated source review and
+unresolved terms. Do not fetch records to populate these templates until the
+specific use is verified and documented.
+
+### Independent annotation and agreement
+
+Annotators must use the labeling guide above, work independently, and not see
+VADER predictions before both have submitted their original labels. Record
+the second annotator on the subset chosen before comparison. The report
+calculates the disagreement rate as differing, valid two-annotator pairs /
+all valid two-annotator pairs. Cohen's kappa is calculated on those same
+pairs; it is unavailable when there are no pairs or expected agreement is
+exactly 1.0. Small or class-imbalanced subsets make agreement statistics
+unstable; report counts and limitations alongside kappa. Unresolved
+disagreements and uncertain cases are excluded from split/evaluation exports
+until adjudicated.
+
+### Deterministic development/held-out split
+
+The split command groups exact normalized headline duplicates and likely
+near-duplicates (normalized text similarity >= 0.90) before seeded random
+assignment. Headlines are normalized by case-folding, replacing punctuation
+with spaces, and collapsing whitespace. Same source/provider article IDs and
+source URLs are also flagged as duplicates by validation. A group is assigned
+as a unit, preventing detected related headlines from crossing partitions.
+The held-out fraction is a target and can differ due to group sizes. No
+stratification is forced; class counts are recorded per output, and a small
+sample may have unbalanced or missing classes. Inspect duplicate warnings
+because automatic near-duplicate detection can miss paraphrases or flag
+similar but distinct headlines.
+
+The split manifest records the seed, fraction target, output IDs, sizes, and
+class counts. Keep the held-out file untouched by threshold selection, model
+selection, prompt work, and error-driven tuning. Use development data for any
+future tuning. A held-out result is not representative of all financial news
+without a sampling design and evidence.
+
+The validator's `total_records_received` is the article-file row count.
+`human_label_counts` use valid primary annotations as recorded; adjudication
+does not overwrite that original-label distribution.
+`invalid_or_missing_required_count` counts invalid article rows.
+`excluded_record_count` counts invalid article rows plus valid-provenance
+articles lacking a permission-cleared review, primary annotation, or resolved
+uncertainty/disagreement. Separate invalid-annotation,
+invalid-permission-review, and invalid-adjudication counts are reported;
+`excluded_records` lists issues across the input files and eligibility
+exclusions. Duplicate and potential-duplicate counts are unique article
+records participating in flagged pairs; the pair list shows each relationship.
+Second-annotator coverage uses valid provenance records as its denominator;
+disagreement and kappa use only complete, valid, non-uncertain pairs.
+
+Validate the templates (which currently have no articles):
+
+```powershell
+uv run --locked python scripts/prepare_evaluation_dataset.py validate --articles data/evaluation/real_news/articles_template.csv --annotations data/evaluation/real_news/annotations_template.csv --permissions data/evaluation/real_news/permission_reviews_template.csv
+```
+
+After lawful acquisition, terms review, and human annotation, validate copied
+working files (do not enter records into the tracked templates):
+
+```powershell
+uv run --locked python scripts/prepare_evaluation_dataset.py validate --articles path\to\articles.csv --annotations path\to\annotations.csv --permissions path\to\permission-reviews.csv --adjudications path\to\adjudications.csv
+```
+
+Create a deterministic split only when at least two eligible examples have
+complete, permission-cleared annotations:
+
+```powershell
+uv run --locked python scripts/prepare_evaluation_dataset.py split --articles path\to\articles.csv --annotations path\to\annotations.csv --permissions path\to\permission-reviews.csv --adjudications path\to\adjudications.csv --development-output path\to\development.csv --heldout-output path\to\heldout.csv --manifest-output path\to\split-manifest.json --seed 20261028 --heldout-fraction 0.2
+```
+
+The split refuses malformed records, skips unresolved disagreements and
+records without the structured local-evaluation permission status, and
+requires at least two eligible examples. It writes evaluator-compatible
+headline CSVs; pass only `heldout.csv` to
+`scripts/evaluate_vader_baseline.py` for final evaluation. The output contains
+headline excerpts and is subject to the applicable rights and retention
+restrictions.
+
 ## Evaluation method
 
 Run the existing `BaselineSentimentAnalyzer` once per valid example, using the
@@ -148,6 +291,13 @@ misclassification CSV:
 
 ```powershell
 uv run --locked python scripts/evaluate_vader_baseline.py --input path\to\labeled.csv --misclassifications-csv path\to\errors.csv
+```
+
+For a held-out real-news CSV produced by the permission-gated workflow, declare
+its reporting category explicitly:
+
+```powershell
+uv run --locked python scripts/evaluate_vader_baseline.py --input path\to\heldout.csv --dataset-category manually_labeled_real_news
 ```
 
 The reported figures are **synthetic fixture results only**. They are not

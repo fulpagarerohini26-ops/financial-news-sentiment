@@ -116,4 +116,8 @@ VADER is general-domain and may misread financial terminology, numeric events,
 negation scope, sarcasm, or context. Scores are descriptive text
 classifications; neither average is evidence of price impact. The evaluation
 fixture is synthetic and provides no manually labeled real financial-news
-evidence. No prediction claim is made by this implementation.
+evidence. The real-news dataset preparation workflow is offline-only and has
+not been populated; collection awaits provider/account and publisher-rights
+review and independent annotation. No prediction claim is made by this
+implementation. See [docs/EVALUATION.md](EVALUATION.md) and
+[docs/DATA_SOURCE.md](DATA_SOURCE.md).

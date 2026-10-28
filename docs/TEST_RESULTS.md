@@ -70,3 +70,24 @@ The full repository suite on 2026-10-28 completed with **108 passed and 7
 expected failures** (`uv run --locked pytest`). Repository Ruff lint passed;
 format checking passed for the changed Python files. Pylance returned no
 diagnostics for the evaluation module, CLI script, or evaluation tests.
+
+## Real-News Dataset Workflow Verification: 2026-10-28
+
+The local validation command was run against the tracked real-news templates:
+
+```powershell
+uv run --locked python scripts/prepare_evaluation_dataset.py validate --articles data/evaluation/real_news/articles_template.csv --annotations data/evaluation/real_news/annotations_template.csv --permissions data/evaluation/real_news/permission_reviews_template.csv
+```
+
+Observed report: **0 article records received**, **0 valid provenance
+records**, one permission-review template classified `not_reviewed`, zero
+permission-cleared articles, zero annotations, and no disagreement or
+partition measurements. This verifies empty-template handling only; it is not
+a real-news dataset validation.
+
+The current full suite completed with **122 passed and 7 xfailed**
+(`uv run --locked pytest`). `uv run --locked ruff check .`, changed-file Ruff
+format checks, `git diff --check`, and Pylance diagnostics for the new
+dataset module, preparation command, evaluator CLI, and dataset tests passed.
+The synthetic evaluator still reports its separate 12-example fixture results;
+no real-news model evaluation has been run.

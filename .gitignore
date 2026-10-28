@@ -4,3 +4,5 @@ __pycache__/
 venv/
 .env
 .ipynb_checkpoints/
+data/evaluation/real_news/*
+!data/evaluation/real_news/*_template.csv

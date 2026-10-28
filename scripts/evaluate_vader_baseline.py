@@ -32,22 +32,37 @@ def main() -> None:
         type=Path,
         help="optionally write misclassified rows to this local CSV path",
     )
+    parser.add_argument(
+        "--dataset-category",
+        choices=("synthetic_pipeline_verification", "manually_labeled_real_news"),
+        default="synthetic_pipeline_verification",
+        help="label the provenance category in the report; defaults to synthetic",
+    )
     args = parser.parse_args()
 
     examples, excluded = load_labeled_examples(args.input)
     report = evaluate_labeled_examples(examples, excluded)
-    print(json.dumps(_report_payload(report, args.input), indent=2, ensure_ascii=False))
+    print(
+        json.dumps(
+            _report_payload(report, args.input, args.dataset_category),
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
     if args.misclassifications_csv is not None:
         _write_misclassifications(args.misclassifications_csv, report)
 
 
-def _report_payload(report: EvaluationReport, dataset_path: Path) -> dict[str, object]:
+def _report_payload(
+    report: EvaluationReport, dataset_path: Path, dataset_category: str
+) -> dict[str, object]:
     metrics = report.metrics
     return {
         "dataset": str(dataset_path),
+        "dataset_category": dataset_category,
         "dataset_note": (
-            "Labels are supplied by the input dataset; results do not imply "
-            "that the dataset is real news."
+            "The category is caller-declared and does not verify provenance, "
+            "human annotation, or usage permissions."
         ),
         "evaluated_count": metrics.evaluated_count,
         "excluded_count": len(report.excluded_records),

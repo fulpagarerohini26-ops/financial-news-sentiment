@@ -104,6 +104,35 @@ The project retains the `finnhub-python` dependency and its prior interface chec
 
 The API documentation confirms the request and response schema, but not the project's account entitlement, date inclusivity, quotas, or licensing. Do not treat live news or market retrieval as confirmed until the manual access check and applicable verification gates are completed.
 
+### Real-News Evaluation Permissions Review: 2026-10-28
+
+The current [Finnhub Terms of Service](https://finnhub.io/terms-of-service)
+were reviewed on 2026-10-28. The page says that site use does not grant
+ownership or an intellectual-property license in data (including third-party
+content), that data must be deleted if the subscription ends, and that data
+or derived results must not be redistributed/shared without Finnhub's written
+approval. It also says listed plans are for personal use unless explicitly
+stated otherwise. These terms do **not** establish permission for this
+project's particular private research, local retention, storage of publisher
+headlines/summaries, use in evaluation outputs, or publication.
+
+The terms link to UTP plan data policies
+(https://www.utpplan.com/DOC/datapolicies.pdf) and a subscriber agreement
+(https://www.utpplan.com/DOC/subagreement.pdf). Those PDF links could not be
+retrieved for review in this check. Account-specific plan terms, written
+approval, attribution requirements, permitted retention duration, and
+publisher/source copyright and redistribution rights remain unresolved. The
+prior account access smoke test is not a license grant.
+
+**Decision:** real-news collection and storage are not cleared and have not
+been started for this dataset milestone. Do not use Finnhub or another source
+to populate evaluation files until the applicable account terms and source
+rights have been checked, documented, and explicit written approval obtained
+where required. The preparation tool is offline-only; it does not fetch any
+news. Keep display and redistribution rights separately documented even when
+internal evaluation is authorized. This project has not determined legal
+permission.
+
 ## 3. Required News Fields
 
 | Logical field | Purpose | Handling |

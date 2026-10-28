@@ -100,7 +100,9 @@ uv run --locked python scripts/evaluate_vader_baseline.py
 This fixture is not real financial news and its metrics are not evidence of
 real-world accuracy. See [docs/EVALUATION.md](docs/EVALUATION.md) for the
 dataset schema, labeling guide, measured synthetic results, and evaluation
-limitations.
+limitations. A separate local-only real-news dataset validation and seeded
+split workflow is documented there; real-news collection remains blocked
+pending applicable terms and rights review.
 
 The application will prioritize local execution and free tools. External API usage and optional LLM inference may be subject to provider limits and hardware requirements.
 
