@@ -41,11 +41,11 @@ Missing optional fields shall not cause the entire application to fail.
 
 ### FR-05: Headline Sentiment Analysis
 
-The baseline milestone calculates a VADER compound score for each valid headline, using only the headline text. Empty or whitespace-only headlines are rejected by the analyzer rather than classified as Neutral. Summary analysis is a later extension.
+The baseline calculates a VADER compound score for each valid headline, using only the headline text. Empty or whitespace-only headlines are rejected by the analyzer rather than classified as Neutral. Headline results are preserved independently from summary results.
 
 ### FR-06: Summary Sentiment Analysis
 
-Independent summary sentiment is planned but is not implemented in the current headline-only baseline. A missing summary does not prevent headline analysis.
+The baseline calculates an independent VADER compound score for each non-empty summary; it shall not concatenate summary text with a headline or substitute one result for the other. A null, empty, or whitespace-only summary is marked unavailable with no score or label and does not prevent headline analysis.
 
 ### FR-07: Sentiment Classification
 
@@ -53,7 +53,7 @@ The baseline shall classify VADER compound scores using configurable thresholds,
 
 ### FR-08: Aggregate Sentiment Analysis
 
-The baseline shall calculate total, per-label counts and percentages, and mean compound score for a collection of headline results. Separate summary aggregates are deferred until summary analysis is implemented.
+The baseline shall calculate headline and summary aggregates separately. For each text type, metrics shall include the available result count, Positive/Negative/Neutral counts and percentages, and average compound score. Percentages and averages shall use only available results of that text type; missing summaries are excluded from summary denominators. Empty collections shall produce zero counts and percentages and no average.
 
 ### FR-09: Sentiment Visualization
 
@@ -119,6 +119,7 @@ The application shall identify its data source, analysis method, relevant date r
 - Local CSVs are required for tests, demonstrations, and provider fallback; live and sample data shall be distinguishable.
 - LLM-based analysis may require local model resources or a separately configured inference service.
 - Sentiment analysis results shall not be presented as guaranteed stock-price predictions.
+- VADER sentiment shall be described as text classification, not investment advice or a validated price-prediction model; limitations with financial terminology, numeric events, sarcasm, and context shall be disclosed.
 
 ## 6. Traceability
 

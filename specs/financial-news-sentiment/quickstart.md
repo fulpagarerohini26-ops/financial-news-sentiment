@@ -1,6 +1,6 @@
 # Quickstart: Financial News Sentiment Analyzer
 
-**Status**: The CSV news adapter and headline-only VADER baseline are implemented. The Streamlit app and market-data workflow remain planned.
+**Status**: The CSV news adapter and independent headline/summary VADER baseline are implemented. The Streamlit app and market-data workflow remain planned.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ Use `uv run --locked` so the selected Python and lockfile are honored.
 uv run --locked python scripts/demo_baseline_sentiment.py
 ```
 
-The script reads the clearly synthetic `data/samples/synthetic_news_articles.csv` through the offline CSV adapter, analyzes each normalized article headline with VADER, and prints article IDs, tickers, headlines, compound scores, and labels. It makes no network requests and requires no API key. Summary sentiment, the Streamlit interface, and stock-price comparison are not implemented in this milestone.
+The script reads the clearly synthetic `data/samples/synthetic_news_articles.csv` through the offline CSV adapter, independently analyzes each normalized article headline and non-empty summary with VADER, and prints article IDs, tickers, headlines, scores/labels, summary availability, and separate aggregate metrics. Missing summaries display as `N/A` and are excluded from summary denominators. It makes no network requests and requires no API key. The Streamlit interface and stock-price comparison are not implemented in this milestone.
 
 ## Optional Live News
 
@@ -43,4 +43,4 @@ Tests use controlled input and mocked provider requests; they do not make live r
 
 ## Expected Behavior
 
-The future application is expected to show valid headline and available-summary analysis, validation and coverage counts, session alignment, and visualizations. The current baseline does not score summaries or implement the UI, stock-price comparison, or any prediction. Sentiment results are estimates, not investment advice.
+The future application is expected to show valid headline and available-summary analysis, validation and coverage counts, session alignment, and visualizations. The current baseline scores headlines and summaries independently, but does not implement the UI, stock-price comparison, or any prediction. Sentiment results are estimates, not investment advice or a validated price-prediction model.

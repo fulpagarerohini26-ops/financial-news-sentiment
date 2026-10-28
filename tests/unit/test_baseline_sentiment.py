@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
 from importlib.metadata import version
@@ -11,7 +12,10 @@ from financial_news_sentiment.sentiment.baseline_analyzer import (
     BaselineSentimentAnalyzer,
     classify_compound_score,
 )
-from financial_news_sentiment.sentiment.metrics import summarize_sentiment
+from financial_news_sentiment.sentiment.metrics import (
+    summarize_sentiment,
+    summarize_summary_sentiment,
+)
 
 
 def _article(
@@ -105,6 +109,13 @@ def test_non_text_headline_is_rejected() -> None:
         BaselineSentimentAnalyzer().analyze(article)
 
 
+def test_non_text_summary_is_rejected() -> None:
+    article = replace(_article(), summary=123)  # type: ignore[arg-type]
+
+    with pytest.raises(TypeError, match="summary must be text or None"):
+        BaselineSentimentAnalyzer().analyze(article)
+
+
 def test_missing_summary_does_not_prevent_headline_analysis() -> None:
     article = _article("Positive outlook and excellent results", summary=None)
 
@@ -113,6 +124,11 @@ def test_missing_summary_does_not_prevent_headline_analysis() -> None:
     assert result.article is article
     assert result.article.summary is None
     assert result.label == "Positive"
+    assert result.summary_result is not None
+    assert result.summary_result.status == "unavailable"
+    assert result.summary_result.compound_score is None
+    assert result.summary_result.label is None
+    assert result.summary_result.article_id == result.article_id
 
 
 def test_summary_and_other_metadata_do_not_contribute_to_score() -> None:
@@ -130,6 +146,8 @@ def test_summary_and_other_metadata_do_not_contribute_to_score() -> None:
     assert result.compound_score == headline_only_result.compound_score
     assert result.label == "Neutral"
     assert result.article.summary == "Terrible losses and disastrous performance!"
+    assert result.summary_result is not None
+    assert result.summary_result.label == "Negative"
 
 
 def test_source_article_fields_are_preserved_and_result_is_associated() -> None:
@@ -161,6 +179,12 @@ def test_source_article_fields_are_preserved_and_result_is_associated() -> None:
     ) == original_fields
     assert result.analyzer_name == "VADER"
     assert result.analyzer_version == version("vaderSentiment")
+    assert result.summary_result is not None
+    assert result.summary_result.article is article
+    assert result.summary_result.article_id == 42
+    assert result.summary_result.status == "available"
+    assert result.summary_result.analyzer_name == "VADER"
+    assert result.summary_result.analyzer_version == version("vaderSentiment")
 
 
 def test_result_keeps_article_association_when_provider_id_is_missing() -> None:
@@ -190,7 +214,10 @@ def test_batch_empty_multiple_articles_and_input_order() -> None:
 
 def test_analysis_is_repeatable_for_identical_input() -> None:
     analyzer = BaselineSentimentAnalyzer()
-    article = _article("Excellent growth with strong results!")
+    article = _article(
+        "Excellent growth with strong results!",
+        summary="Revenue grew strongly!",
+    )
 
     first = analyzer.analyze(article)
     second = analyzer.analyze(article)
@@ -198,6 +225,83 @@ def test_analysis_is_repeatable_for_identical_input() -> None:
     assert first.compound_score == second.compound_score
     assert first.label == second.label
     assert first.analyzer_version == second.analyzer_version
+    assert first.summary_result == second.summary_result
+    assert first.summary_result is not None
+    assert second.summary_result is not None
+    assert (
+        first.summary_result.analyzer_version == second.summary_result.analyzer_version
+    )
+
+
+@pytest.mark.parametrize(
+    ("summary", "expected_label", "score_check"),
+    [
+        (
+            "Excellent results deliver strong growth!",
+            "Positive",
+            lambda score: score > 0.05,
+        ),
+        (
+            "Disappointing results show severe losses!",
+            "Negative",
+            lambda score: score < -0.05,
+        ),
+        (
+            "The company released its annual report on Tuesday.",
+            "Neutral",
+            lambda score: -0.05 < score < 0.05,
+        ),
+    ],
+)
+def test_summary_is_scored_with_expected_label(
+    summary: str, expected_label: str, score_check: Callable[[float], bool]
+) -> None:
+    result = BaselineSentimentAnalyzer().analyze(_article(summary=summary))
+
+    assert result.summary_result is not None
+    assert result.summary_result.status == "available"
+    assert result.summary_result.label == expected_label
+    assert result.summary_result.compound_score is not None
+    assert score_check(result.summary_result.compound_score)
+
+
+@pytest.mark.parametrize("summary", [None, "", " ", " \t\n"])
+def test_missing_or_blank_summary_is_unavailable(summary: str | None) -> None:
+    result = BaselineSentimentAnalyzer().analyze(_article(summary=summary))
+
+    assert result.summary_result is not None
+    assert result.summary_result.status == "unavailable"
+    assert result.summary_result.compound_score is None
+    assert result.summary_result.label is None
+
+
+def test_headline_and_summary_are_scored_independently() -> None:
+    analyzer = BaselineSentimentAnalyzer()
+    article = _article(
+        "Excellent results deliver strong growth!",
+        summary="Disappointing results show severe losses!",
+    )
+
+    result = analyzer.analyze(article)
+    separate_headline = analyzer.analyze(_article(article.headline))
+    separate_summary = analyzer.analyze(_article(article.summary or ""))
+
+    assert result.compound_score == separate_headline.compound_score
+    assert result.label == separate_headline.label == "Positive"
+    assert result.summary_result is not None
+    assert result.summary_result.compound_score == separate_summary.compound_score
+    assert result.summary_result.label == separate_summary.label == "Negative"
+
+
+def test_summary_neutral_score_is_available_not_missing() -> None:
+    result = BaselineSentimentAnalyzer().analyze(
+        _article(summary="The company released its annual report on Tuesday.")
+    )
+
+    assert result.summary_result is not None
+    assert result.summary_result.status == "available"
+    assert result.summary_result.compound_score is not None
+    assert result.summary_result.label == "Neutral"
 
 
 def test_invalid_article_input_is_rejected() -> None:
@@ -271,6 +375,80 @@ def test_empty_metrics_are_zeroed_without_an_average() -> None:
     assert metrics.total_articles == 0
     assert (
         metrics.positive_count == metrics.negative_count == metrics.neutral_count == 0
+    )
+    assert (
+        metrics.positive_percentage,
+        metrics.negative_percentage,
+        metrics.neutral_percentage,
+    ) == (0.0, 0.0, 0.0)
+    assert metrics.average_compound_score is None
+
+
+def test_summary_metrics_exclude_unavailable_summaries() -> None:
+    results = BaselineSentimentAnalyzer().analyze_many(
+        [
+            _article("Neutral headline", article_id=1, summary="Excellent growth!"),
+            _article("Neutral headline", article_id=2, summary="Severe losses!"),
+            _article("Neutral headline", article_id=3, summary="A routine filing."),
+            _article("Neutral headline", article_id=4, summary="  "),
+            _article("Neutral headline", article_id=5, summary=None),
+        ]
+    )
+
+    metrics = summarize_summary_sentiment(results)
+
+    assert metrics.available_count == 3
+    assert metrics.total_articles == 3
+    assert (metrics.positive_count, metrics.negative_count, metrics.neutral_count) == (
+        1,
+        1,
+        1,
+    )
+    assert (
+        metrics.positive_percentage,
+        metrics.negative_percentage,
+        metrics.neutral_percentage,
+    ) == (33.33, 33.33, 33.33)
+    assert sum(
+        (
+            metrics.positive_percentage,
+            metrics.negative_percentage,
+            metrics.neutral_percentage,
+        )
+    ) == pytest.approx(100.0, abs=0.02)
+    assert metrics.average_compound_score == pytest.approx(
+        sum(
+            result.summary_result.compound_score
+            for result in results
+            if result.summary_result is not None
+            and result.summary_result.compound_score is not None
+        )
+        / 3
+    )
+
+
+@pytest.mark.parametrize(
+    "articles",
+    [
+        [],
+        [
+            _article(article_id=1, summary=None),
+            _article(article_id=2, summary=" \t "),
+        ],
+    ],
+)
+def test_summary_metrics_are_zero_when_no_summaries_are_available(
+    articles: list[NewsArticle],
+) -> None:
+    metrics = summarize_summary_sentiment(
+        BaselineSentimentAnalyzer().analyze_many(articles)
+    )
+
+    assert metrics.available_count == 0
+    assert (metrics.positive_count, metrics.negative_count, metrics.neutral_count) == (
+        0,
+        0,
+        0,
     )
     assert (
         metrics.positive_percentage,

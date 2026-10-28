@@ -1,6 +1,6 @@
 # Data Model: Financial News Sentiment Analyzer
 
-These are planned logical records and invariants, not implemented Python types. Provider-specific fields must be verified and mapped at source boundaries.
+These are logical records and invariants. Provider-specific fields must be verified and mapped at source boundaries. `NewsArticle` and the baseline sentiment result types are implemented; future request, market, session, and comparison records remain planned.
 
 ## AnalysisRequest
 
@@ -32,20 +32,34 @@ Missing summary does not prevent headline analysis. Invalid required fields excl
 
 Input, accepted, rejected, duplicate, and unidentifiable-record counts; rejection reasons; duplicate key type; and source/date coverage. Avoid logging secrets or unnecessary raw payloads.
 
-## SentimentResult
+## Baseline Sentiment Results
 
-- `article_identity`: reliable source ID/URL, or per-record identity when no reliable cross-record key exists.
-- `text_type`: `headline` or `summary`.
-- `compound_score`: finite VADER score in `[-1, 1]`.
-- `label`: Negative for score `<= -0.05`; Positive for `>= 0.05`; Neutral otherwise.
-- `method`: VADER identifier and actual package version.
-- `availability`: scored or unavailable. Empty/missing summary has no score and no label.
+`SentimentResult` preserves its existing headline fields: the unchanged article,
+compound score, label, analyzer name/version, and optional `article_id`
+property. It now also has an optional `summary_result` field, populated by the
+baseline analyzer. `SummarySentimentResult` references the same article and
+has a status, optional compound score, optional label, analyzer name/version,
+and optional `article_id` property.
 
-Score headline and summary independently, even if their text happens to match.
+- Headline score is finite and in `[-1, 1]`; its label is Negative for scores
+  `<= -0.05`, Positive for scores `>= 0.05`, and Neutral otherwise.
+- A non-empty summary is scored independently with the same method and
+  thresholds and has `status="available"`.
+- A null, empty, or whitespace-only summary has `status="unavailable"`, with
+  no score and no label; it is not Neutral.
+- Headline and summary text are never concatenated and scores are never
+  substituted across fields.
 
 ## SentimentAggregate
 
-Grouped by ticker, interval/session, and text type. Contains valid article count, mean compound score (and median only if retained), positive/negative/neutral counts, and coverage/unavailable counts. Only valid available scores contribute. An empty group is unavailable, not zero or Neutral.
+Headline and summary aggregates are calculated separately using
+`summarize_sentiment` and `summarize_summary_sentiment`. Each reports the
+available-result count, mean compound score, positive/negative/neutral counts,
+and their percentages. Percentages use the available-result count as the
+denominator, are rounded independently to two decimal places, and may have a
+small rounding difference from 100%. Unavailable summaries are excluded from
+summary counts, percentages, and average. Empty groups have zero counts and
+percentages and no average score; missing data is not assigned zero or Neutral.
 
 ## MarketObservation
 
@@ -73,7 +87,7 @@ Contains request scope; source and live/sample status; method and thresholds; va
 
 Flow: request -> CSV/verified source -> normalized records -> validation/deduplication -> independent headline/summary scores -> separate aggregates -> Nasdaq session assignment -> market returns -> matched comparisons -> chart/result metadata.
 
-1. Missing summaries are not Neutral.
+1. Missing summaries are unavailable, not Neutral, and do not contribute to summary aggregate denominators.
 2. Reliable duplicate identities contribute once; unidentifiable records are not silently merged.
 3. Invalid requests are never changed silently.
 4. Headline and summary statistics stay separate.

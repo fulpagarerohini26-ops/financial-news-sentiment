@@ -16,7 +16,7 @@ The application will retrieve company-specific financial news, analyze available
 
 Features described in this README represent the intended scope. They should not be considered implemented until verified through testing.
 
-**Implemented milestone:** Offline CSV ingestion and a standalone, headline-only VADER sentiment baseline are available. The end-to-end example uses only the clearly synthetic fixture; the dashboard, stock-price comparison, and contextual LLM analysis remain out of scope for this milestone.
+**Implemented milestone:** Offline CSV ingestion and a standalone VADER baseline that independently scores headlines and available summaries are available. The end-to-end example uses only the clearly synthetic fixture; the dashboard, stock-price comparison, and contextual LLM analysis remain out of scope for this milestone.
 
 ## 2. Objectives
 
@@ -81,7 +81,7 @@ The planned technology stack is:
 
 The VADER baseline uses compound thresholds of Negative <= -0.05, Positive >= 0.05, and Neutral strictly between those values. The `vadersentiment>=3.3.2` dependency is declared in `pyproject.toml`; the lockfile resolves it to version 3.3.2.
 
-The current baseline uses `vaderSentiment` 3.3.2 from the local Python environment. It analyzes the trimmed headline only, preserves the original article, and records the article, compound score, label, analyzer, and version in each result. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) for thresholds, invalid-text behavior, batch rules, summary metrics, limitations, tests, and the offline example.
+The current baseline uses `vaderSentiment` 3.3.2 from the local Python environment. It independently analyzes the trimmed headline and each non-empty summary, preserves the original article, and records headline results alongside an explicit summary status and optional summary score/label. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) for thresholds, missing-text behavior, batch rules, separate aggregate definitions, limitations, tests, and the offline example.
 
 Run the offline demonstration from the repository root:
 
