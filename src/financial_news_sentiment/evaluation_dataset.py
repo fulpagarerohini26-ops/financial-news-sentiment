@@ -657,6 +657,64 @@ def create_deterministic_split(
     article_rows = _read_csv(articles_path, _ARTICLE_FIELDS)
     annotation_rows = _read_csv(annotations_path, _ANNOTATION_FIELDS)
     permission_rows = _read_csv(permissions_path, _PERMISSION_FIELDS)
+    adjudication_rows = (
+        _read_csv(adjudications_path, _ADJUDICATION_FIELDS)
+        if adjudications_path is not None
+        else ()
+    )
+    eligible = _eligible_evaluation_rows(
+        article_rows, annotation_rows, permission_rows, adjudication_rows
+    )
+
+    if len(eligible) < 2:
+        raise DatasetValidationError(
+            "at least two permission-cleared, annotated, resolved articles are required to split"
+        )
+    group_ids = _headline_groups(eligible)
+    shuffled_groups = list(group_ids)
+    random.Random(seed).shuffle(shuffled_groups)
+    target_heldout = max(1, round(len(eligible) * heldout_fraction))
+    heldout_ids: set[str] = set()
+    heldout_count = 0
+    for group in shuffled_groups:
+        if heldout_count < target_heldout and heldout_count + len(group) < len(
+            eligible
+        ):
+            heldout_ids.update(group)
+            heldout_count += len(group)
+    if not heldout_ids:
+        raise DatasetValidationError(
+            "cannot split because all eligible examples belong to one duplicate group"
+        )
+
+    development_rows = [row for row in eligible if row["article_id"] not in heldout_ids]
+    heldout_rows = [row for row in eligible if row["article_id"] in heldout_ids]
+    output_fields = (
+        "article_id",
+        "ticker",
+        "headline",
+        "human_label",
+        "summary",
+        "source",
+        "published_at",
+        "annotation_notes",
+    )
+    _write_csv(development_output, output_fields, development_rows)
+    _write_csv(heldout_output, output_fields, heldout_rows)
+    return len(development_rows), len(heldout_rows)
+
+
+def report_to_json(report: DatasetValidationReport) -> str:
+    """Serialize a dataset-validation report deterministically."""
+    return json.dumps(asdict(report), indent=2, sort_keys=True)
+
+
+def _eligible_evaluation_rows(
+    article_rows: tuple[tuple[int, dict[str, str]], ...],
+    annotation_rows: tuple[tuple[int, dict[str, str]], ...],
+    permission_rows: tuple[tuple[int, dict[str, str]], ...],
+    adjudication_rows: tuple[tuple[int, dict[str, str]], ...],
+) -> list[dict[str, str]]:
     permission_reviews = {
         row["permission_review_id"].strip(): _PermissionReview(
             row, _permission_state(row)
@@ -668,14 +726,9 @@ def create_deterministic_split(
         annotations_by_id[row["internal_article_id"].strip()][
             row["annotator_role"].strip()
         ] = row
-    adjudications = (
-        {
-            row["internal_article_id"].strip(): row
-            for _, row in _read_csv(adjudications_path, _ADJUDICATION_FIELDS)
-        }
-        if adjudications_path is not None
-        else {}
-    )
+    adjudications = {
+        row["internal_article_id"].strip(): row for _, row in adjudication_rows
+    }
 
     eligible: list[dict[str, str]] = []
     for _, row in article_rows:
@@ -728,48 +781,7 @@ def create_deterministic_split(
                 "_source_url_key": row["source_url"].strip().rstrip("/"),
             }
         )
-
-    if len(eligible) < 2:
-        raise DatasetValidationError(
-            "at least two permission-cleared, annotated, resolved articles are required to split"
-        )
-    group_ids = _headline_groups(eligible)
-    shuffled_groups = list(group_ids)
-    random.Random(seed).shuffle(shuffled_groups)
-    target_heldout = max(1, round(len(eligible) * heldout_fraction))
-    heldout_ids: set[str] = set()
-    heldout_count = 0
-    for group in shuffled_groups:
-        if heldout_count < target_heldout and heldout_count + len(group) < len(
-            eligible
-        ):
-            heldout_ids.update(group)
-            heldout_count += len(group)
-    if not heldout_ids:
-        raise DatasetValidationError(
-            "cannot split because all eligible examples belong to one duplicate group"
-        )
-
-    development_rows = [row for row in eligible if row["article_id"] not in heldout_ids]
-    heldout_rows = [row for row in eligible if row["article_id"] in heldout_ids]
-    output_fields = (
-        "article_id",
-        "ticker",
-        "headline",
-        "human_label",
-        "summary",
-        "source",
-        "published_at",
-        "annotation_notes",
-    )
-    _write_csv(development_output, output_fields, development_rows)
-    _write_csv(heldout_output, output_fields, heldout_rows)
-    return len(development_rows), len(heldout_rows)
-
-
-def report_to_json(report: DatasetValidationReport) -> str:
-    """Serialize a dataset-validation report deterministically."""
-    return json.dumps(asdict(report), indent=2, sort_keys=True)
+    return eligible
 
 
 def _read_csv(

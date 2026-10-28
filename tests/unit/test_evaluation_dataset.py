@@ -26,6 +26,7 @@ from financial_news_sentiment.evaluation_workflow import (
     import_annotator_sheet,
     import_permitted_csv,
     sha256_file,
+    validate_split_artifacts,
     verify_frozen_heldout,
 )
 
@@ -429,6 +430,99 @@ def test_deterministic_split_keeps_near_duplicates_together_and_evaluates(
     assert heldout_report.metrics.evaluated_count == len(heldout_examples)
 
 
+def test_validate_split_checks_source_labels_and_manifest(tmp_path: Path) -> None:
+    files = _dataset_files(
+        tmp_path,
+        [
+            _article("a1", "Fictional Acme reports strong revenue growth"),
+            _article("a2", "Fictional Acme announces facility expansion"),
+            _article("a3", "Fictional Acme files a routine report"),
+        ],
+        [
+            _annotation("a1", "primary", "Positive"),
+            _annotation("a2", "primary", "Positive"),
+            _annotation("a3", "primary", "Neutral"),
+        ],
+    )
+    development, heldout = tmp_path / "development.csv", tmp_path / "heldout.csv"
+    create_deterministic_split(
+        *files[:3], development, heldout, seed=25, heldout_fraction=0.34
+    )
+
+    def split_rows(path: Path) -> list[dict[str, str]]:
+        with path.open(encoding="utf-8", newline="") as stream:
+            return list(csv.DictReader(stream))
+
+    def distribution(rows: list[dict[str, str]]) -> dict[str, int]:
+        return {
+            label: sum(row["human_label"] == label for row in rows)
+            for label in ("Positive", "Negative", "Neutral")
+        }
+
+    dev_rows, heldout_rows = split_rows(development), split_rows(heldout)
+    split_manifest = tmp_path / "split.json"
+    manifest = {
+        "dataset_category": "manually_labeled_real_news",
+        "development_article_ids": [row["article_id"] for row in dev_rows],
+        "heldout_article_ids": [row["article_id"] for row in heldout_rows],
+        "development_size": len(dev_rows),
+        "heldout_size": len(heldout_rows),
+        "development_class_counts": distribution(dev_rows),
+        "heldout_class_counts": distribution(heldout_rows),
+        "source_sha256": {
+            "articles": sha256_file(files[0]),
+            "annotations": sha256_file(files[1]),
+            "permissions": sha256_file(files[2]),
+        },
+        "development_sha256": sha256_file(development),
+        "heldout_sha256": sha256_file(heldout),
+    }
+    split_manifest.write_text(json.dumps(manifest), encoding="utf-8")
+    result = validate_split_artifacts(
+        articles_path=files[0],
+        annotations_path=files[1],
+        permissions_path=files[2],
+        development_path=development,
+        heldout_path=heldout,
+        split_manifest_path=split_manifest,
+    )
+    assert result["development_count"] == len(dev_rows)
+    assert result["heldout_count"] == len(heldout_rows)
+    assert result["partition_leakage_count"] == 0
+
+    heldout_rows[0]["human_label"] = (
+        "Neutral" if heldout_rows[0]["human_label"] != "Neutral" else "Positive"
+    )
+    _write(heldout, list(heldout_rows[0]), heldout_rows)
+    manifest["heldout_sha256"] = sha256_file(heldout)
+    split_manifest.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(DatasetValidationError, match="human_label differs"):
+        validate_split_artifacts(
+            articles_path=files[0],
+            annotations_path=files[1],
+            permissions_path=files[2],
+            development_path=development,
+            heldout_path=heldout,
+            split_manifest_path=split_manifest,
+        )
+
+    heldout.write_text(
+        "article_id,ticker,headline,human_label,source,published_at\nbad-row,ACME\n",
+        encoding="utf-8",
+    )
+    manifest["heldout_sha256"] = sha256_file(heldout)
+    split_manifest.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(DatasetValidationError, match="malformed split CSV row"):
+        validate_split_artifacts(
+            articles_path=files[0],
+            annotations_path=files[1],
+            permissions_path=files[2],
+            development_path=development,
+            heldout_path=heldout,
+            split_manifest_path=split_manifest,
+        )
+
+
 def test_same_provider_article_id_is_grouped_across_split(tmp_path: Path) -> None:
     rows = [
         _article(
@@ -527,6 +621,30 @@ def test_collection_permission_gate_precedes_client_call(tmp_path: Path) -> None
         )
     client.get_company_news.assert_not_called()
     assert not (tmp_path / "articles.csv").exists()
+
+    source_csv = _write(
+        tmp_path / "source.csv",
+        ["ticker", "headline", "published_at"],
+        [
+            {
+                "ticker": "ACME",
+                "headline": "Synthetic story for permission-gate test",
+                "published_at": "2026-10-01T10:00:00Z",
+            }
+        ],
+    )
+    with pytest.raises(DatasetValidationError, match="no collection or import"):
+        import_permitted_csv(
+            source_path=source_csv,
+            articles_path=tmp_path / "imported.csv",
+            permissions_path=permission_path,
+            permission_review_id="review-1",
+            provider_name="Finnhub",
+            dataset_version="real-v1",
+            provenance_ref="synthetic-test-only",
+            exclusions_path=tmp_path / "import-exclusions.csv",
+        )
+    assert not (tmp_path / "imported.csv").exists()
 
 
 def test_collection_retention_flags_and_duplicate_exclusions(tmp_path: Path) -> None:
@@ -866,6 +984,15 @@ def test_freeze_requires_reviewed_complete_real_news_and_hashes_artifacts(
         *files[:3], dev, heldout, seed=12, heldout_fraction=0.5
     )
     assert counts[0] and counts[1]
+
+    def split_label_counts(path: Path) -> dict[str, int]:
+        with path.open(encoding="utf-8", newline="") as stream:
+            rows = list(csv.DictReader(stream))
+        return {
+            label: sum(row["human_label"] == label for row in rows)
+            for label in ("Positive", "Negative", "Neutral")
+        }
+
     split_manifest = tmp_path / "split.json"
     split_manifest.write_text(
         json.dumps(
@@ -873,6 +1000,10 @@ def test_freeze_requires_reviewed_complete_real_news_and_hashes_artifacts(
                 "dataset_category": "manually_labeled_real_news",
                 "development_article_ids": sorted(_evaluator_ids(dev)),
                 "heldout_article_ids": sorted(_evaluator_ids(heldout)),
+                "development_size": len(_evaluator_ids(dev)),
+                "heldout_size": len(_evaluator_ids(heldout)),
+                "development_class_counts": split_label_counts(dev),
+                "heldout_class_counts": split_label_counts(heldout),
                 "source_sha256": {
                     "articles": sha256_file(files[0]),
                     "annotations": sha256_file(files[1]),

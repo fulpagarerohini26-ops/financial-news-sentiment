@@ -23,6 +23,7 @@ from financial_news_sentiment.evaluation_workflow import (
     import_annotator_sheet,
     import_permitted_csv,
     sha256_file,
+    validate_split_artifacts,
 )
 
 
@@ -43,6 +44,15 @@ def main() -> None:
     split.add_argument("--manifest-output", type=Path, required=True)
     split.add_argument("--seed", type=int, required=True)
     split.add_argument("--heldout-fraction", type=float, default=0.2)
+
+    validate_split = commands.add_parser(
+        "validate-split",
+        help="verify split files against source annotations, permissions, and manifest",
+    )
+    _add_dataset_arguments(validate_split)
+    validate_split.add_argument("--development", type=Path, required=True)
+    validate_split.add_argument("--heldout", type=Path, required=True)
+    validate_split.add_argument("--split-manifest", type=Path, required=True)
 
     collect = commands.add_parser(
         "collect-finnhub",
@@ -124,6 +134,24 @@ def main() -> None:
             args.articles, args.annotations, args.permissions, args.adjudications
         )
         print(report_to_json(report))
+        return
+
+    if args.command == "validate-split":
+        print(
+            json.dumps(
+                validate_split_artifacts(
+                    articles_path=args.articles,
+                    annotations_path=args.annotations,
+                    permissions_path=args.permissions,
+                    development_path=args.development,
+                    heldout_path=args.heldout,
+                    split_manifest_path=args.split_manifest,
+                    adjudications_path=args.adjudications,
+                ),
+                indent=2,
+                sort_keys=True,
+            )
+        )
         return
 
     if args.command == "collect-finnhub":

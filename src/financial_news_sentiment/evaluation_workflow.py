@@ -14,11 +14,13 @@ from typing import Any
 
 from financial_news_sentiment.evaluation import HUMAN_LABELS
 from financial_news_sentiment.evaluation_dataset import (
+    _ADJUDICATION_FIELDS,
     _ANNOTATION_FIELDS,
     _ARTICLE_FIELDS,
     _PERMISSION_FIELDS,
     DatasetValidationError,
     _Article,
+    _eligible_evaluation_rows,
     _find_duplicate_pairs,
     _is_utc_timestamp,
     _permission_state,
@@ -478,9 +480,6 @@ def freeze_split(
         raise DatasetValidationError("freeze manifest must be a separate output file")
     if freeze_path.exists():
         raise DatasetValidationError(f"{freeze_path}: refusing to overwrite a freeze")
-    report = validate_evaluation_dataset(
-        articles_path, annotations_path, permissions_path, adjudications_path
-    )
     source_rows = _read_csv(articles_path, _ARTICLE_FIELDS)
     if any(
         any(
@@ -493,6 +492,18 @@ def freeze_split(
         raise DatasetValidationError(
             "synthetic or test-only source records cannot be frozen as real news"
         )
+    split_report = validate_split_artifacts(
+        articles_path=articles_path,
+        annotations_path=annotations_path,
+        permissions_path=permissions_path,
+        development_path=development_path,
+        heldout_path=heldout_path,
+        split_manifest_path=split_manifest_path,
+        adjudications_path=adjudications_path,
+    )
+    report = validate_evaluation_dataset(
+        articles_path, annotations_path, permissions_path, adjudications_path
+    )
     if report.valid_provenance_records < 2:
         raise DatasetValidationError("at least two real-news articles are required")
     if (
@@ -509,38 +520,9 @@ def freeze_split(
         raise DatasetValidationError(
             "cannot freeze until an independent second annotator has labeled a subset"
         )
-    with Path(split_manifest_path).open(encoding="utf-8") as stream:
-        split_manifest = json.load(stream)
-    if split_manifest.get("dataset_category") != "manually_labeled_real_news":
-        raise DatasetValidationError("split manifest is not marked as real-news")
-    if split_manifest.get("development_sha256") != sha256_file(development_path):
-        raise DatasetValidationError("development split does not match split manifest")
-    if split_manifest.get("heldout_sha256") != sha256_file(heldout_path):
-        raise DatasetValidationError("held-out split does not match split manifest")
-    source_files = {
-        "articles": articles_path,
-        "annotations": annotations_path,
-        "permissions": permissions_path,
-    }
-    if adjudications_path is not None:
-        source_files["adjudications"] = adjudications_path
-    for key, path in source_files.items():
-        if split_manifest.get("source_sha256", {}).get(key) != sha256_file(path):
-            raise DatasetValidationError(
-                f"{key} source changed after split generation; create a new split"
-            )
-
     dev_ids = _evaluator_ids(development_path)
     heldout_ids = _evaluator_ids(heldout_path)
-    if not dev_ids or not heldout_ids or dev_ids & heldout_ids:
-        raise DatasetValidationError(
-            "development and held-out files must both be non-empty and disjoint"
-        )
-    expected_ids = set(split_manifest.get("development_article_ids", [])) | set(
-        split_manifest.get("heldout_article_ids", [])
-    )
-    if dev_ids | heldout_ids != expected_ids:
-        raise DatasetValidationError("split files do not match manifest article IDs")
+    source_files = split_report["source_files"]
 
     articles = [
         _Article(
@@ -559,7 +541,7 @@ def freeze_split(
     ]
     if any(pair.cross_partition for pair in _find_duplicate_pairs(articles)):
         raise DatasetValidationError(
-            "duplicate or near-duplicate articles cross the proposed partitions"
+            "duplicate or near-duplicate articles cross partitions"
         )
     dataset_versions = sorted(
         {
@@ -588,6 +570,169 @@ def freeze_split(
         freeze_path, json.dumps(manifest, indent=2, sort_keys=True) + "\n"
     )
     return manifest
+
+
+def validate_split_artifacts(
+    *,
+    articles_path: str | Path,
+    annotations_path: str | Path,
+    permissions_path: str | Path,
+    development_path: str | Path,
+    heldout_path: str | Path,
+    split_manifest_path: str | Path,
+    adjudications_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Validate split hashes, eligible labels, partition membership, and leakage."""
+    report = validate_evaluation_dataset(
+        articles_path, annotations_path, permissions_path, adjudications_path
+    )
+    if (
+        report.invalid_or_missing_required_count
+        or report.invalid_annotation_count
+        or report.invalid_permission_review_count
+        or report.invalid_adjudication_count
+    ):
+        raise DatasetValidationError(
+            "cannot validate split while dataset contains malformed records"
+        )
+    try:
+        with Path(split_manifest_path).open(encoding="utf-8") as stream:
+            manifest = json.load(stream)
+    except (OSError, json.JSONDecodeError) as error:
+        raise DatasetValidationError(
+            f"unable to read split manifest: {error}"
+        ) from error
+    if not isinstance(manifest, dict):
+        raise DatasetValidationError("split manifest must contain a JSON object")
+    if manifest.get("dataset_category") != "manually_labeled_real_news":
+        raise DatasetValidationError("split manifest is not marked as real-news")
+
+    source_files: dict[str, str | Path] = {
+        "articles": articles_path,
+        "annotations": annotations_path,
+        "permissions": permissions_path,
+    }
+    if adjudications_path is not None:
+        source_files["adjudications"] = adjudications_path
+    source_hashes = manifest.get("source_sha256")
+    if not isinstance(source_hashes, dict) or set(source_hashes) != set(source_files):
+        raise DatasetValidationError(
+            "split manifest source list differs from the supplied source files"
+        )
+    for key, path in source_files.items():
+        if source_hashes.get(key) != sha256_file(path):
+            raise DatasetValidationError(
+                f"{key} source changed after split generation; create a new split"
+            )
+    output_paths = {
+        "development": development_path,
+        "heldout": heldout_path,
+    }
+    actual_rows = {
+        partition: _read_evaluator_rows(path)
+        for partition, path in output_paths.items()
+    }
+    for partition, path in output_paths.items():
+        if manifest.get(f"{partition}_sha256") != sha256_file(path):
+            raise DatasetValidationError(
+                f"{partition} file hash differs from split manifest"
+            )
+    dev_ids = {row["article_id"] for row in actual_rows["development"]}
+    heldout_ids = {row["article_id"] for row in actual_rows["heldout"]}
+    if not dev_ids or not heldout_ids or dev_ids & heldout_ids:
+        raise DatasetValidationError(
+            "development and held-out files must both be non-empty and disjoint"
+        )
+    manifest_dev_ids = manifest.get("development_article_ids")
+    manifest_heldout_ids = manifest.get("heldout_article_ids")
+    if not isinstance(manifest_dev_ids, list) or not all(
+        isinstance(article_id, str) for article_id in manifest_dev_ids
+    ):
+        raise DatasetValidationError("development article IDs are invalid in manifest")
+    if not isinstance(manifest_heldout_ids, list) or not all(
+        isinstance(article_id, str) for article_id in manifest_heldout_ids
+    ):
+        raise DatasetValidationError("held-out article IDs are invalid in manifest")
+    if dev_ids != set(manifest_dev_ids):
+        raise DatasetValidationError("development IDs differ from split manifest")
+    if heldout_ids != set(manifest_heldout_ids):
+        raise DatasetValidationError("held-out IDs differ from split manifest")
+
+    article_rows = _read_csv(articles_path, _ARTICLE_FIELDS)
+    annotation_rows = _read_csv(annotations_path, _ANNOTATION_FIELDS)
+    permission_rows = _read_csv(permissions_path, _PERMISSION_FIELDS)
+    adjudication_rows = (
+        _read_csv(adjudications_path, _ADJUDICATION_FIELDS)
+        if adjudications_path is not None
+        else ()
+    )
+    eligible = _eligible_evaluation_rows(
+        article_rows, annotation_rows, permission_rows, adjudication_rows
+    )
+    expected = {row["article_id"]: row for row in eligible}
+    actual = {row["article_id"]: row for rows in actual_rows.values() for row in rows}
+    if actual.keys() != expected.keys():
+        raise DatasetValidationError(
+            "split article IDs do not match permission-cleared, resolved annotations"
+        )
+    for article_id, expected_row in expected.items():
+        actual_row = actual[article_id]
+        for field in ("ticker", "headline", "human_label", "source", "published_at"):
+            if actual_row[field] != expected_row[field]:
+                raise DatasetValidationError(
+                    f"{article_id}: split {field} differs from source or annotation"
+                )
+    articles = [
+        _Article(
+            row_number,
+            row
+            | {
+                "partition": (
+                    "development"
+                    if row["internal_article_id"].strip() in dev_ids
+                    else "heldout"
+                )
+            },
+            row["internal_article_id"].strip(),
+        )
+        for row_number, row in article_rows
+        if row["internal_article_id"].strip() in expected
+    ]
+    if any(pair.cross_partition for pair in _find_duplicate_pairs(articles)):
+        raise DatasetValidationError(
+            "duplicate or near-duplicate articles cross partitions"
+        )
+
+    distributions = {
+        partition: _label_distribution(rows) for partition, rows in actual_rows.items()
+    }
+    for partition, rows in actual_rows.items():
+        if len(rows) != manifest.get(f"{partition}_size"):
+            raise DatasetValidationError(
+                f"{partition} count differs from split manifest"
+            )
+        manifest_counts = manifest.get(f"{partition}_class_counts")
+        if (
+            not isinstance(manifest_counts, dict)
+            or {label: manifest_counts.get(label, 0) for label in HUMAN_LABELS}
+            != distributions[partition]
+        ):
+            raise DatasetValidationError(
+                f"{partition} class counts differ from split manifest"
+            )
+    return {
+        "dataset_category": manifest["dataset_category"],
+        "development_count": len(dev_ids),
+        "heldout_count": len(heldout_ids),
+        "development_class_counts": distributions["development"],
+        "heldout_class_counts": distributions["heldout"],
+        "partition_leakage_count": 0,
+        "source_sha256": manifest["source_sha256"],
+        "development_sha256": manifest["development_sha256"],
+        "heldout_sha256": manifest["heldout_sha256"],
+        "manifest": manifest,
+        "source_files": source_files,
+    }
 
 
 def verify_frozen_heldout(
@@ -772,14 +917,62 @@ def _save_source_articles(
 
 
 def _evaluator_ids(path: str | Path) -> set[str]:
+    return {row["article_id"] for row in _read_evaluator_rows(path)}
+
+
+def _read_evaluator_rows(path: str | Path) -> list[dict[str, str]]:
     with Path(path).open(encoding="utf-8-sig", newline="") as stream:
         reader = csv.DictReader(stream)
-        if not reader.fieldnames or "article_id" not in reader.fieldnames:
-            raise DatasetValidationError(f"{path}: missing article_id column")
-        ids = [row["article_id"].strip() for row in reader]
+        required_fields = {
+            "article_id",
+            "ticker",
+            "headline",
+            "human_label",
+            "source",
+            "published_at",
+        }
+        if not reader.fieldnames or not required_fields <= set(reader.fieldnames):
+            raise DatasetValidationError(
+                f"{path}: missing required split fields: "
+                + ", ".join(sorted(required_fields - set(reader.fieldnames or ())))
+            )
+        rows: list[dict[str, str]] = []
+        for row_number, row in enumerate(reader, start=2):
+            if None in row or any(row.get(field) is None for field in required_fields):
+                raise DatasetValidationError(
+                    f"{path}:{row_number}: malformed split CSV row"
+                )
+            rows.append(
+                {
+                    key: value
+                    for key, value in row.items()
+                    if key is not None and value is not None
+                }
+            )
+    ids = [row.get("article_id", "").strip() for row in rows]
+    if any(
+        not row["article_id"].strip()
+        or not row["ticker"].strip()
+        or not row["headline"].strip()
+        or not row["human_label"].strip()
+        for row in rows
+    ):
+        raise DatasetValidationError(f"{path}: split contains a blank required value")
     if any(not article_id for article_id in ids) or len(ids) != len(set(ids)):
         raise DatasetValidationError(f"{path}: blank or duplicate article IDs")
-    return set(ids)
+    for row in rows:
+        row["article_id"] = row["article_id"].strip()
+    return rows
+
+
+def _label_distribution(rows: list[dict[str, str]]) -> dict[str, int]:
+    distribution = {label: 0 for label in HUMAN_LABELS}
+    for row in rows:
+        label = row["human_label"]
+        if label not in distribution:
+            raise DatasetValidationError(f"invalid split label: {label}")
+        distribution[label] += 1
+    return distribution
 
 
 def _refuse_frozen_source_change(path: Path, source_key: str) -> None:

@@ -111,3 +111,28 @@ Finnhub adapter was called; no network request or output files were created.
 The manually labeled synthetic fixture still evaluates separately as
 `synthetic_pipeline_verification`; no real-news collection, annotation,
 split, freeze, or evaluation was performed.
+
+## Readiness Review and Split Validation: 2026-10-28
+
+Added a `validate-split` command to check that development and held-out files
+match the current source hashes, permission-cleared article set, resolved
+human labels, partition IDs, class counts, and duplicate/near-duplicate
+grouping. A test deliberately changes a held-out label and updates its file
+hash; validation rejects the modified label against its independent
+annotation. The unresolved-permission test also confirms that both Finnhub
+collection and offline CSV import stop before creating article outputs.
+
+Observed checks:
+
+| Command | Result |
+|---|---|
+| `uv run --locked pytest tests/unit/test_evaluation_dataset.py` | Passed: 24 tests |
+| `uv run --locked pytest` | Passed: 132 passed, 7 xfailed |
+| `uv run --locked ruff check .` | Passed |
+| `uv run --locked ruff format --check src/financial_news_sentiment/evaluation_dataset.py src/financial_news_sentiment/evaluation_workflow.py scripts/prepare_evaluation_dataset.py tests/unit/test_evaluation_dataset.py` | Passed |
+| `git diff --check` | Passed |
+| `uv run --locked python scripts/prepare_evaluation_dataset.py --help` | Passed; lists `validate-split` |
+
+No real-news collection or import, human annotation, split, freeze, or
+real-news evaluation was performed. Provider rights remain unresolved, and
+the tracked data files remain templates.

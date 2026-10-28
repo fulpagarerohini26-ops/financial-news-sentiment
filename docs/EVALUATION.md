@@ -304,6 +304,15 @@ working files (do not enter records into the tracked templates):
 uv run --locked python scripts/prepare_evaluation_dataset.py validate --articles path\to\articles.csv --annotations path\to\annotations.csv --permissions path\to\permission-reviews.csv --adjudications path\to\adjudications.csv
 ```
 
+Import a CSV only after its use and local storage have been verified and the
+matching permission-review row has been completed. The command performs no
+network requests; it refuses to import while required permission fields are
+unclear or prohibited:
+
+```powershell
+uv run --locked python scripts/prepare_evaluation_dataset.py import-csv --input path\to\permitted-source.csv --permissions path\to\permission-reviews.csv --permission-review-id VERIFIED_REVIEW_ID --provider-name DOCUMENTED_PROVIDER --dataset-version real-v1 --provenance-ref PERMITTED_SOURCE_REFERENCE --articles-output path\to\articles.csv --exclusions-output path\to\import-exclusions.csv
+```
+
 Create a deterministic split only when at least two eligible examples have
 complete, permission-cleared annotations:
 
@@ -318,6 +327,16 @@ headline CSVs; pass only `heldout.csv` to
 `scripts/evaluate_vader_baseline.py` for final evaluation. The output contains
 headline excerpts and is subject to the applicable rights and retention
 restrictions.
+
+Validate the generated files before freezing. This check compares the IDs and
+labels in both outputs with the currently permission-cleared source records
+and resolved annotations, verifies manifest/source/output hashes and class
+counts, and detects duplicate or near-duplicate leakage. It does not freeze
+the split:
+
+```powershell
+uv run --locked python scripts/prepare_evaluation_dataset.py validate-split --articles path\to\articles.csv --annotations path\to\annotations.csv --permissions path\to\permission-reviews.csv --adjudications path\to\adjudications.csv --development path\to\development.csv --heldout path\to\heldout.csv --split-manifest path\to\split-manifest.json
+```
 
 After validation and annotations are complete, create a freeze manifest.
 Freeze requires at least two permission-cleared records, complete valid
