@@ -85,9 +85,29 @@ permission-cleared articles, zero annotations, and no disagreement or
 partition measurements. This verifies empty-template handling only; it is not
 a real-news dataset validation.
 
-The current full suite completed with **122 passed and 7 xfailed**
+At that checkpoint, the full suite completed with **122 passed and 7 xfailed**
 (`uv run --locked pytest`). `uv run --locked ruff check .`, changed-file Ruff
 format checks, `git diff --check`, and Pylance diagnostics for the new
 dataset module, preparation command, evaluator CLI, and dataset tests passed.
 The synthetic evaluator still reports its separate 12-example fixture results;
 no real-news model evaluation has been run.
+
+## Collection and Annotation Workflow: 2026-10-28
+
+The final workflow suite completed with **131 passed and 7 xfailed**
+(`uv run --locked pytest`), including Finnhub, CSV, sentiment, evaluation, and
+Nasdaq calendar tests. The 7 expected failures are existing Nasdaq calendar
+verification xfails.
+
+`uv run --locked ruff check .`, Ruff format checks for all changed Python
+files, `git diff --check`, and Pylance diagnostics for the changed workflow,
+dataset, CLI, evaluator, and test files passed. The focused workflow/evaluator
+run completed with **37 passed**.
+
+The CLI validation command reported zero real-news articles, zero valid
+provenance records, and one permission review `not_reviewed`. An explicit
+`collect-finnhub` command using that unresolved review was rejected before the
+Finnhub adapter was called; no network request or output files were created.
+The manually labeled synthetic fixture still evaluates separately as
+`synthetic_pipeline_verification`; no real-news collection, annotation,
+split, freeze, or evaluation was performed.

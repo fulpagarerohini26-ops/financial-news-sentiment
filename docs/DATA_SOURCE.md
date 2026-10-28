@@ -128,10 +128,20 @@ prior account access smoke test is not a license grant.
 been started for this dataset milestone. Do not use Finnhub or another source
 to populate evaluation files until the applicable account terms and source
 rights have been checked, documented, and explicit written approval obtained
-where required. The preparation tool is offline-only; it does not fetch any
-news. Keep display and redistribution rights separately documented even when
-internal evaluation is authorized. This project has not determined legal
-permission.
+where required. No collection has occurred. The collector is invoked only by
+an explicit command and is permission-gated. Keep display and redistribution
+rights separately documented even when internal evaluation is authorized.
+This project has not determined legal permission.
+
+The evaluation-preparation CLI now includes an explicit one-request
+`collect-finnhub` command and a permission-gated `import-csv` command. Neither
+runs by default. Collection checks the linked review before constructing the
+Finnhub client/request, makes one request for the caller-specified ticker and
+date range, records UTC collection time and dataset provenance, and emits
+duplicate exclusions without headline text. Provider article IDs and source
+URLs are retained only when their separate permission-review fields are
+`allowed`. This workflow has not been used to collect news; an API request
+success would still not prove permission.
 
 ## 3. Required News Fields
 
@@ -144,6 +154,7 @@ permission.
 | source | News publisher | Optional |
 | article_url | Link to the article | Optional, subject to provider response |
 | provider_article_id | Article identifier | Optional; useful for deduplication |
+| source_name | Publisher returned by the provider | Optional; distinct from the provider used for retrieval |
 
 These are logical application fields. The implementation shall map the
 provider's actual response fields to this internal schema.

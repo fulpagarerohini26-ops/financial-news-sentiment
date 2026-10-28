@@ -13,6 +13,7 @@ from financial_news_sentiment.evaluation import (
     evaluate_labeled_examples,
     load_labeled_examples,
 )
+from financial_news_sentiment.evaluation_workflow import verify_frozen_heldout
 
 
 def main() -> None:
@@ -38,7 +39,21 @@ def main() -> None:
         default="synthetic_pipeline_verification",
         help="label the provenance category in the report; defaults to synthetic",
     )
+    parser.add_argument(
+        "--freeze-manifest",
+        type=Path,
+        help="required for manually labeled real-news evaluation",
+    )
     args = parser.parse_args()
+
+    if args.dataset_category == "manually_labeled_real_news":
+        if args.freeze_manifest is None:
+            parser.error(
+                "manually_labeled_real_news evaluation requires --freeze-manifest"
+            )
+        verify_frozen_heldout(args.input, args.freeze_manifest)
+    elif args.freeze_manifest is not None:
+        parser.error("--freeze-manifest is only valid for real-news evaluation")
 
     examples, excluded = load_labeled_examples(args.input)
     report = evaluate_labeled_examples(examples, excluded)

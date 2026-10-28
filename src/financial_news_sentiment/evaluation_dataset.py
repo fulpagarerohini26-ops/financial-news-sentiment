@@ -24,6 +24,7 @@ _ARTICLE_FIELDS = (
     "internal_article_id",
     "ticker",
     "provider_name",
+    "source_name",
     "provider_article_id",
     "source_url",
     "headline",
@@ -61,6 +62,8 @@ _PERMISSION_FIELDS = (
     "attribution_requirement",
     "retention_requirement",
     "written_approval_reference",
+    "source_identifier_storage",
+    "source_url_storage",
     "reviewer_notes",
 )
 _ADJUDICATION_FIELDS = (
@@ -627,6 +630,12 @@ def create_deterministic_split(
         raise ValueError(
             "split output paths must be distinct from each other and all inputs"
         )
+    existing_outputs = [str(path) for path in output_paths if path.exists()]
+    if existing_outputs:
+        raise DatasetValidationError(
+            "refusing to overwrite split outputs: "
+            + ", ".join(sorted(existing_outputs))
+        )
     report = validate_evaluation_dataset(
         articles_path, annotations_path, permissions_path, adjudications_path
     )
@@ -707,7 +716,7 @@ def create_deterministic_split(
                 "headline": row["headline"],
                 "human_label": label,
                 "summary": "",
-                "source": row["provider_name"].strip(),
+                "source": row["source_name"].strip() or row["provider_name"].strip(),
                 "published_at": row["published_at"].strip(),
                 "annotation_notes": primary["rationale"].strip(),
                 "_provider_key": (
@@ -880,6 +889,11 @@ def _permission_state(values: dict[str, str]) -> PermissionState:
         )
     ]
     if any(status not in _RIGHTS for status in statuses):
+        return "not_reviewed"
+    if any(
+        values[field].strip().lower() not in _RIGHTS
+        for field in ("source_identifier_storage", "source_url_storage")
+    ):
         return "not_reviewed"
     if values["account_plan_verified"].strip().lower() != "yes":
         return "unclear"
